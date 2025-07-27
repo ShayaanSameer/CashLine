@@ -607,9 +607,28 @@ def register_routes(app):
                     )
                     db.session.add(goal)
         
-        db.session.commit()
-        flash('Welcome! Your personalized budget has been set up.', 'success')
-        return redirect(url_for('dashboard'))
+        try:
+            db.session.commit()
+            flash('Welcome! Your personalized budget has been set up.', 'success')
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            # If it's a schema issue, try to recreate the database
+            if 'NOT NULL constraint failed: goal.target_date' in str(e):
+                try:
+                    from sqlalchemy import text
+                    db.session.execute(text("DROP TABLE IF EXISTS goal"))
+                    db.create_all()
+                    # Retry the commit
+                    db.session.commit()
+                    flash('Welcome! Your personalized budget has been set up.', 'success')
+                    return redirect(url_for('dashboard'))
+                except Exception as retry_error:
+                    flash('Database schema issue. Please contact support.', 'error')
+                    return redirect(url_for('dashboard'))
+            else:
+                flash('An error occurred while setting up your budget.', 'error')
+                return redirect(url_for('dashboard'))
     
     @app.errorhandler(404)
     def not_found_error(error):

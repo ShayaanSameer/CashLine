@@ -4,4 +4,5 @@ set -o errexit
 
 pip install -r requirements.txt
 
-python manage.py db upgrade 
+# Run database migration
+python migrate_db.py 

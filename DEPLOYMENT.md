@@ -48,7 +48,17 @@ GEMINI_API_KEY=your-gemini-api-key
 ```
 
 ### **Database Migration:**
-The app automatically creates tables on first run. No manual migration needed.
+The app automatically creates tables on first run. If you encounter database schema issues:
+
+1. **Automatic Fix**: The app includes error handling that will automatically fix schema issues
+2. **Manual Reset**: If needed, you can run `python reset_db.py` in the Render console
+3. **Build Process**: The build script automatically runs database migration
+
+### **Troubleshooting Database Issues:**
+If you see `NOT NULL constraint failed: goal.target_date` errors:
+- The app will automatically fix this on the next request
+- If persistent, the build script includes migration logic
+- As a last resort, use the reset script in the Render console
 
 ### **Features Available:**
 - 🔐 **User Registration & Login**
