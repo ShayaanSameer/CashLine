@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import os
-from datetime import datetime
+from datetime import datetime, date
 from dotenv import load_dotenv
 import requests
 import json
@@ -30,14 +30,17 @@ def create_app(config_name='default'):
     
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
     
-    # Register blueprints or routes here
+    # Register routes
     register_routes(app)
     
     return app
 
 def register_routes(app):
+    # Load environment variables
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    
     # Helper to get current month and year
     now = datetime.now()
     CURRENT_MONTH = now.strftime('%B')
@@ -75,16 +78,19 @@ def register_routes(app):
         session['currency'] = code
         rate = fetch_exchange_rate(code, 'USD')
         session['exchange_rate'] = rate
+        session['currency_rate'] = rate
         return redirect(request.referrer or url_for('dashboard'))
     
     @app.route('/')
     @login_required
     def dashboard():
-        # Always ensure currency and rate are set and up to date
+        # Always ensure currency and rate are set
         if 'currency' not in session:
             session['currency'] = 'USD'
         if 'exchange_rate' not in session:
             session['exchange_rate'] = 1.0
+        if 'currency_rate' not in session:
+            session['currency_rate'] = 1.0
         
         # Get user's data
         budgets = Budget.query.filter_by(user_id=current_user.id).all()
@@ -92,22 +98,58 @@ def register_routes(app):
         investments = Investment.query.filter_by(user_id=current_user.id).all()
         goals = Goal.query.filter_by(user_id=current_user.id).all()
         
+        print(f"DEBUG: Dashboard - User {current_user.id} has {len(budgets)} budgets, {len(expenses)} expenses, {len(investments)} investments, {len(goals)} goals")
+        
         # Calculate totals
         total_budget = sum(b.limit_amount for b in budgets)
         total_expenses = sum(e.converted_amount_usd for e in expenses)
         total_investments = sum(i.shares * i.purchase_price for i in investments)
         total_goals = sum(g.target_amount for g in goals)
         
+        # Calculate data for dashboard
+        data = {
+            'total_budget': total_budget,
+            'total_spent': total_expenses,
+            'income': 0,  # We can add income tracking later
+            'categories': []
+        }
+        
+        # Calculate categories from budgets
+        for budget in budgets:
+            spent = sum(e.converted_amount_usd for e in expenses if e.category == budget.category)
+            data['categories'].append({
+                'name': budget.category,
+                'budget': budget.limit_amount,
+                'spent': spent
+            })
+        
+        # Get recent expenses (last 5)
+        recent_expenses = expenses[-5:] if expenses else []
+        
+        # Calculate investments snapshot
+        investments_snapshot = []
+        for inv in investments:
+            investments_snapshot.append({
+                'symbol': inv.symbol,
+                'shares': inv.shares,
+                'purchase_price': inv.purchase_price,
+                'current_price': inv.purchase_price,  # For now, use purchase price
+                'value': inv.shares * inv.purchase_price,
+                'gain': 0,
+                'purchase_date': inv.purchase_date.strftime('%Y-%m-%d')
+            })
+        
         return render_template('dashboard.html',
+                             data=data,
                              budgets=budgets,
                              expenses=expenses,
                              investments=investments,
                              goals=goals,
-                             total_budget=total_budget,
-                             total_expenses=total_expenses,
-                             total_investments=total_investments,
-                             total_goals=total_goals,
-                             currency_list=CURRENCY_LIST)
+                             recent_expenses=recent_expenses,
+                             investments_snapshot=investments_snapshot,
+                             currency_list=CURRENCY_LIST,
+                             get_currency_symbol=get_currency_symbol,
+                             now=datetime.now())
     
     @app.route('/login', methods=['GET', 'POST'])
     def login():
@@ -154,6 +196,7 @@ def register_routes(app):
     def budget():
         form = BudgetForm()
         if form.validate_on_submit():
+            print(f"DEBUG: Form submitted - Category: {form.category.data}, Amount: {form.limit_amount.data}")
             budget = Budget(
                 user_id=current_user.id,
                 category=form.category.data,
@@ -163,10 +206,14 @@ def register_routes(app):
             )
             db.session.add(budget)
             db.session.commit()
+            print(f"DEBUG: Budget saved with ID: {budget.id}")
             flash('Budget added successfully!', 'success')
             return redirect(url_for('budget'))
+        elif form.errors:
+            print(f"DEBUG: Form errors: {form.errors}")
         
         budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        print(f"DEBUG: Found {len(budgets)} budgets for user {current_user.id}")
         return render_template('budget.html', form=form, budgets=budgets)
     
     @app.route('/edit_budget/<int:budget_id>', methods=['GET', 'POST'])
@@ -199,6 +246,17 @@ def register_routes(app):
     @login_required
     def expenses():
         form = ExpenseForm()
+        
+        # Get user's budget categories for dropdown
+        user_budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        category_choices = [(budget.category, budget.category) for budget in user_budgets]
+        
+        # Add a default option if no budgets exist
+        if not category_choices:
+            category_choices = [('Other', 'Other')]
+        
+        form.category.choices = category_choices
+        
         if form.validate_on_submit():
             # Convert to USD if needed
             amount_usd = form.amount.data
@@ -228,6 +286,16 @@ def register_routes(app):
     def edit_expense(expense_id):
         expense = Expense.query.filter_by(id=expense_id, user_id=current_user.id).first_or_404()
         form = ExpenseForm(obj=expense)
+        
+        # Get user's budget categories for dropdown
+        user_budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        category_choices = [(budget.category, budget.category) for budget in user_budgets]
+        
+        # Add a default option if no budgets exist
+        if not category_choices:
+            category_choices = [('Other', 'Other')]
+        
+        form.category.choices = category_choices
         
         if form.validate_on_submit():
             # Convert to USD if needed
@@ -282,6 +350,32 @@ def register_routes(app):
         
         return render_template('add_investment.html', form=form)
     
+    @app.route('/investments/edit/<int:investment_id>', methods=['GET', 'POST'])
+    @login_required
+    def edit_investment(investment_id):
+        investment = Investment.query.filter_by(id=investment_id, user_id=current_user.id).first_or_404()
+        form = InvestmentForm(obj=investment)
+        
+        if form.validate_on_submit():
+            investment.symbol = form.symbol.data.upper()
+            investment.shares = form.shares.data
+            investment.purchase_price = form.purchase_price.data
+            investment.purchase_date = form.purchase_date.data
+            db.session.commit()
+            flash('Investment updated successfully!', 'success')
+            return redirect(url_for('investments'))
+        
+        return render_template('edit_investment.html', form=form, investment=investment)
+    
+    @app.route('/investments/delete/<int:investment_id>', methods=['POST'])
+    @login_required
+    def delete_investment(investment_id):
+        investment = Investment.query.filter_by(id=investment_id, user_id=current_user.id).first_or_404()
+        db.session.delete(investment)
+        db.session.commit()
+        flash('Investment deleted successfully!', 'success')
+        return redirect(url_for('investments'))
+    
     @app.route('/goals')
     @login_required
     def goals():
@@ -293,6 +387,7 @@ def register_routes(app):
     def add_goal():
         form = GoalForm()
         if form.validate_on_submit():
+            print(f"DEBUG: Goal form submitted - Name: {form.name.data}, Target: {form.target_amount.data}")
             goal = Goal(
                 user_id=current_user.id,
                 name=form.name.data,
@@ -302,8 +397,11 @@ def register_routes(app):
             )
             db.session.add(goal)
             db.session.commit()
+            print(f"DEBUG: Goal saved with ID: {goal.id}")
             flash('Goal added successfully!', 'success')
             return redirect(url_for('goals'))
+        elif form.errors:
+            print(f"DEBUG: Goal form errors: {form.errors}")
         
         return render_template('add_goal.html', form=form)
     
@@ -345,6 +443,174 @@ def register_routes(app):
         
         return render_template('advice.html')
     
+    @app.route('/onboarding', methods=['GET', 'POST'])
+    @login_required
+    def onboarding():
+        print(f"DEBUG: Onboarding - User: {current_user.username if current_user.is_authenticated else 'Not authenticated'}")
+        message = None
+        error = None
+        ai_suggestion = None
+        
+        if request.method == 'GET':
+            # Don't reset the database as it will delete the current user
+            # Just ensure tables exist
+            with app.app_context():
+                db.create_all()
+        
+        if request.method == 'POST':
+            print(f"DEBUG: Onboarding POST - User: {current_user.username if current_user.is_authenticated else 'Not authenticated'}")
+            income = request.form.get('income')
+            rent = request.form.get('rent')
+            bills = request.form.getlist('bills[]')
+            bill_amounts = request.form.getlist('bill_amounts[]')
+            goals = request.form.getlist('goals')
+            
+            # Compose bills string for AI
+            bills_str = ", ".join([f"{name} (${amt})" for name, amt in zip(bills, bill_amounts) if name and amt]) if bills and bill_amounts else "None"
+            
+            # Compose AI prompt
+            if not GEMINI_API_KEY:
+                # Create a simple default budget without AI
+                default_budget = {
+                    'budget_split': [
+                        {'name': 'Housing', 'percent': 30, 'description': 'Rent, mortgage, utilities'},
+                        {'name': 'Food & Dining', 'percent': 15, 'description': 'Groceries, restaurants, takeout'},
+                        {'name': 'Transportation', 'percent': 10, 'description': 'Gas, public transit, car maintenance'},
+                        {'name': 'Entertainment', 'percent': 10, 'description': 'Movies, hobbies, social activities'},
+                        {'name': 'Shopping', 'percent': 10, 'description': 'Clothes, personal items, gifts'},
+                        {'name': 'Healthcare', 'percent': 5, 'description': 'Medical expenses, insurance'},
+                        {'name': 'Savings', 'percent': 20, 'description': 'Emergency fund and long-term savings'}
+                    ],
+                    'savings_goals': [
+                        {'name': 'Emergency Fund', 'target_amount': 5000, 'deadline': '2025-12-31', 'description': '3-6 months of expenses'},
+                        {'name': 'Vacation Fund', 'target_amount': 3000, 'deadline': '2025-10-15', 'description': 'Next vacation savings'}
+                    ]
+                }
+                return render_template('onboarding_confirm.html', 
+                                    income=income, rent=rent, 
+                                    bills=zip(bills, bill_amounts), 
+                                    goals=goals, ai_suggestion=default_budget)
+            
+            prompt = (
+                "Given the following financial goals: " + ", ".join(goals) + ". "
+                f"The user's monthly after-tax income is ${income}. "
+                f"Their rent/mortgage is ${rent} per month. "
+                f"Their fixed monthly bills/expenses are: {bills_str}. "
+                "Suggest a practical budget split (categories, percentages, and a short description for each) that best helps achieve these goals and covers their fixed expenses. "
+                "Also suggest 2-3 specific savings goals (with target amounts and deadlines if possible) based on the user's info and goals. "
+                "Return the result as a JSON object with two keys: 'budget_split' (a list of objects with 'name', 'percent', 'description') and 'savings_goals' (a list of objects with 'name', 'target_amount', 'deadline', 'description'). "
+                "Percentages should sum to 100 and be rounded to the nearest integer."
+            )
+            
+            conversation = [
+                {"role": "user", "parts": [{"text": prompt}]}
+            ]
+            
+            try:
+                response = requests.post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": GEMINI_API_KEY
+                    },
+                    json={"contents": conversation},
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    answer = result.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', None)
+                    
+                    if answer:
+                        # Try to extract JSON from the response
+                        start = answer.find('{')
+                        end = answer.rfind('}')
+                        if start != -1 and end != -1:
+                            json_str = answer[start:end+1]
+                            try:
+                                ai_suggestion = json.loads(json_str)
+                            except Exception:
+                                ai_suggestion = None
+                    
+                    if not ai_suggestion:
+                        error = "Could not parse AI suggestion. Please try again."
+                        return render_template('onboarding.html', message=message, error=error)
+                    
+                    # Show confirmation page with AI suggestion
+                    return render_template('onboarding_confirm.html', 
+                                        income=income, rent=rent, 
+                                        bills=zip(bills, bill_amounts), 
+                                        goals=goals, ai_suggestion=ai_suggestion)
+                else:
+                    error = f"Gemini API error: {response.status_code}"
+                    return render_template('onboarding.html', message=message, error=error)
+                    
+            except Exception as e:
+                error = f"Error connecting to Gemini API: {e}"
+                return render_template('onboarding.html', message=message, error=error)
+        
+        return render_template('onboarding.html', message=message, error=error)
+
+    @app.route('/onboarding/confirm', methods=['POST'])
+    @login_required
+    def onboarding_confirm():
+        income = request.form.get('income')
+        rent = request.form.get('rent')
+        bills = request.form.getlist('bills[]')
+        bill_amounts = request.form.getlist('bill_amounts[]')
+        goals = request.form.getlist('goals')
+        budget_names = request.form.getlist('budget_name[]')
+        budget_percents = request.form.getlist('budget_percent[]')
+        goal_names = request.form.getlist('goal_name[]')
+        goal_targets = request.form.getlist('goal_target[]')
+        goal_deadlines = request.form.getlist('goal_deadline[]')
+        
+        # Get current user
+        user = current_user
+        
+        # Save income (we'll add this to a new Income model later)
+        # For now, we'll store it in session
+        session['monthly_income'] = float(income) if income else 0
+        
+        # Add AI-suggested budget categories
+        if income and budget_names and budget_percents:
+            for name, percent in zip(budget_names, budget_percents):
+                if name and percent:
+                    limit = float(income) * float(percent) / 100.0
+                    budget = Budget(
+                        user_id=user.id,
+                        category=name,
+                        limit_amount=limit,
+                        month=datetime.now().strftime('%B'),
+                        year=datetime.now().year
+                    )
+                    db.session.add(budget)
+        
+        # Save AI-suggested savings goals
+        if goal_names and goal_targets:
+            for name, target, deadline in zip(goal_names, goal_targets, goal_deadlines):
+                if name and target:
+                    # Handle empty or invalid deadline
+                    target_date = None
+                    if deadline and deadline.strip():
+                        try:
+                            target_date = datetime.strptime(deadline, '%Y-%m-%d').date()
+                        except ValueError:
+                            target_date = None
+                    
+                    goal = Goal(
+                        user_id=user.id,
+                        name=name,
+                        target_amount=float(target),
+                        current_amount=0,
+                        target_date=target_date
+                    )
+                    db.session.add(goal)
+        
+        db.session.commit()
+        flash('Welcome! Your personalized budget has been set up.', 'success')
+        return redirect(url_for('dashboard'))
+    
     @app.errorhandler(404)
     def not_found_error(error):
         return render_template('404.html'), 404
@@ -355,7 +621,7 @@ def register_routes(app):
         return render_template('500.html'), 500
 
 # Create the app instance
-app = create_app()
+app = create_app('production' if os.environ.get('DATABASE_URL') else 'default')
 
 if __name__ == '__main__':
     app.run(debug=True)

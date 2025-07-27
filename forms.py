@@ -39,7 +39,7 @@ class BudgetForm(FlaskForm):
 
 class ExpenseForm(FlaskForm):
     amount = FloatField('Amount', validators=[DataRequired()])
-    category = StringField('Category', validators=[DataRequired()])
+    category = SelectField('Category', validators=[DataRequired()])
     description = StringField('Description', validators=[DataRequired()])
     date = DateField('Date', validators=[DataRequired()])
     currency = SelectField('Currency', choices=[

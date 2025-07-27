@@ -1,96 +1,111 @@
-{% extends 'base.html' %}
-{% block title %}Budgets{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Budgets - Budget Tracker{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="mb-3 fw-bold">Budgets</h1>
-        </div>
-    </div>
-    <div class="row mb-4">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-sm rounded-4 p-4">
-                <h5 class="mb-3 fw-semibold"><i class="fa-solid fa-plus-circle me-2 text-primary"></i>{% if edit_budget %}Edit Budget{% else %}Add or Update Budget{% endif %}</h5>
-                {% if message %}
-                  <div class="alert alert-success d-flex align-items-center" role="alert">
-                    <i class="fa-solid fa-check-circle me-2"></i> {{ message }}
-                  </div>
-                {% endif %}
-                <form method="post" {% if edit_budget %}action="/edit_budget/{{ edit_budget[0] }}"{% endif %}>
-                  <div class="mb-3">
-                    <label class="form-label fw-semibold">Category:</label>
-                    <input type="text" name="category" class="form-control rounded-3" required value="{% if edit_budget %}{{ edit_budget[1] }}{% endif %}">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label fw-semibold">Budget Limit:</label>
-                    <input type="number" name="budget" step="0.01" class="form-control form-control-lg text-center fw-bold rounded-3" required value="{% if edit_budget %}{{ edit_budget[2] }}{% endif %}">
-                  </div>
-                  <button type="submit" class="btn btn-primary rounded-pill w-100 py-2 fs-5 mt-2">
-                    <i class="fa-solid fa-save me-2"></i>{% if edit_budget %}Save Changes{% else %}Save Budget{% endif %}
-                  </button>
-                  {% if edit_budget %}
-                  <a href="/budget" class="btn btn-link w-100 mt-2">Cancel</a>
-                  {% endif %}
-                </form>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Add New Budget</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.category.label(class="form-label") }}
+                                    {{ form.category(class="form-control") }}
+                                    {% if form.category.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.category.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.limit_amount.label(class="form-label") }}
+                                    {{ form.limit_amount(class="form-control") }}
+                                    {% if form.limit_amount.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.limit_amount.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.month.label(class="form-label") }}
+                                    {{ form.month(class="form-control") }}
+                                    {% if form.month.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.month.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.year.label(class="form-label") }}
+                                    {{ form.year(class="form-control") }}
+                                    {% if form.year.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.year.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm rounded-4 p-4">
-                <h5 class="mb-3">Current Budgets</h5>
-                <table class="table table-hover align-middle bg-white rounded-4 overflow-hidden">
-                    <thead class="table-light">
-                        <tr>
-                            <th></th>
-                            <th>Category</th>
-                            <th>Limit</th>
-                            <th>Month</th>
-                            <th>Year</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for b in budgets %}
-                    <tr>
-                        <td><span class="category-dot me-2" style="background: {{ b[5] }}; width: 14px; height: 14px; display: inline-block; border-radius: 50%;"></span></td>
-                        <td class="fw-semibold">{{ b[1] }}</td>
-                        <td>${{ b[2] }}</td>
-                        <td>{{ b[3] }}</td>
-                        <td>{{ b[4] }}</td>
-                        <td>
-                        {% if b[0] is not none and b[0]|int %}
-                            <a href="/edit_budget/{{ b[0] }}" class="btn btn-sm btn-outline-primary me-1" title="Edit"><i class="fa-solid fa-pen"></i></a>
-                            <form method="post" action="/delete_budget/{{ b[0] }}" style="display:inline;" onsubmit="return confirm('Delete this budget?');">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                            </form>
-                        {% else %}
-                            <span class="text-muted">N/A</span>
-                        {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Your Budgets</h4>
+                </div>
+                <div class="card-body">
+                    {% if budgets %}
+                        <div class="list-group">
+                            {% for budget in budgets %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ budget.category }}</h6>
+                                        <small class="text-muted">{{ budget.month }} {{ budget.year }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary rounded-pill">${{ "%.2f"|format(budget.limit_amount) }}</span>
+                                        <div class="btn-group btn-group-sm ms-2">
+                                            <a href="{{ url_for('edit_budget', budget_id=budget.id) }}" class="btn btn-outline-primary btn-sm">Edit</a>
+                                            <form method="POST" action="{{ url_for('delete_budget', budget_id=budget.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No budgets created yet.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-<style>
-.table-hover tbody tr:hover {
-    background: #f0f6ff;
-    transition: background 0.18s;
-}
-.category-dot {
-    border: 1.5px solid #e6edfa;
-}
-.card:focus-within, .card:hover {
-    box-shadow: 0 6px 24px rgba(44,44,84,0.10), 0 1.5px 6px rgba(44,44,84,0.08);
-    transform: translateY(-2px) scale(1.01);
-    transition: box-shadow 0.2s, transform 0.2s;
-}
-.btn-primary:active {
-    transform: scale(0.98);
-}
-</style> 
+{% endblock %} 

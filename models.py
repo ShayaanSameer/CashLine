@@ -59,5 +59,5 @@ class Goal(db.Model):
     name = db.Column(db.String(100), nullable=False)
     target_amount = db.Column(db.Float, nullable=False)
     current_amount = db.Column(db.Float, default=0.0)
-    target_date = db.Column(db.Date, nullable=False)
+    target_date = db.Column(db.Date, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow) 

@@ -88,10 +88,15 @@
             {% endif %}
         </div>
     </div>
-    {# Show welcome banner only if no budget exists at all #}
-    {% set needs_onboarding = not data.categories or data.categories|length == 0 %}
-    {% if needs_onboarding %}
-        <div class="alert alert-info">Welcome! <a href="/onboarding">Set up your budget</a> to get started.</div>
+    {# Show welcome message for new users #}
+    {% if not data.categories or data.categories|length == 0 %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading">🎯 Get Started with AI-Powered Budgeting!</h5>
+            <p class="mb-0">New to budgeting? Let our AI help you create a personalized budget based on your income, expenses, and financial goals.</p>
+            <hr>
+            <a href="{{ url_for('onboarding') }}" class="btn btn-primary btn-sm">Start Onboarding</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     {% endif %}
     <div class="row g-4 mb-4">
         <div class="col-md-6 col-lg-6">
@@ -136,10 +141,10 @@
                         <tbody>
                         {% for e in recent_expenses %}
                             <tr>
-                                <td>{{ get_currency_symbol(session.currency) }}{{ (e[0] * session.currency_rate)|round(2) }}</td>
-                                <td>{{ e[1] }}</td>
-                                <td>{{ e[3] }}</td>
-                                <td>{{ e[2] }}</td>
+                                <td>{{ get_currency_symbol(session.currency) }}{{ (e.amount * session.currency_rate)|round(2) }}</td>
+                                <td>{{ e.category }}</td>
+                                <td>{{ e.date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ e.description }}</td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -165,18 +170,18 @@
                             <li class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong>{{ goal[1] }}</strong>
-                                        <span class="text-muted small">({{ goal[4] if goal[4] else 'No deadline' }})</span>
+                                        <strong>{{ goal.name }}</strong>
+                                        <span class="text-muted small">({{ goal.target_date.strftime('%Y-%m-%d') if goal.target_date else 'No deadline' }})</span>
                                     </div>
-                                    <div class="ms-2">{{ get_currency_symbol(session.currency) }}{{ (goal[3] * session.currency_rate)|round(2) }} / {{ get_currency_symbol(session.currency) }}{{ (goal[2] * session.currency_rate)|round(2) }}</div>
+                                    <div class="ms-2">{{ get_currency_symbol(session.currency) }}{{ (goal.current_amount * session.currency_rate)|round(2) }} / {{ get_currency_symbol(session.currency) }}{{ (goal.target_amount * session.currency_rate)|round(2) }}</div>
                                 </div>
                                 <div class="progress my-1" style="height: 8px;">
-                                    {% set percent = (goal[3] / goal[2] * 100) if goal[2] else 0 %}
+                                    {% set percent = (goal.current_amount / goal.target_amount * 100) if goal.target_amount else 0 %}
                                     <div class="progress-bar bg-success" style="width: {{ percent|round(0) }}%"></div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted">{{ percent|round(0) }}% complete</small>
-                                    <a href="/goals/edit/{{ goal[0] }}" class="btn btn-sm btn-outline-secondary py-0 px-2">Edit</a>
+                                    <a href="{{ url_for('edit_goal', goal_id=goal.id) }}" class="btn btn-sm btn-outline-secondary py-0 px-2">Edit</a>
                                 </div>
                             </li>
                         {% endfor %}
