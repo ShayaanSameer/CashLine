@@ -76,16 +76,18 @@
             <div class="text-muted">{{ now.strftime('%A, %B %d, %Y') }}</div>
         </div>
         <div class="col-md-6 text-end">
-            <form method="post" action="/set_currency" class="d-inline-block me-2">
-                <select name="currency" class="form-select d-inline w-auto" onchange="this.form.submit()">
-                    {% for code, symbol in CURRENCY_LIST %}
-                        <option value="{{ code }}" {% if session.currency == code %}selected{% endif %}>{{ code }} ({{ symbol }})</option>
-                    {% endfor %}
-                </select>
-            </form>
-            {% if data.income %}
-                <span class="badge bg-primary fs-5">Monthly Income: {{ get_currency_symbol(session.currency) }}{{ (data.income * session.currency_rate)|round(2) }}</span>
-            {% endif %}
+            <div class="d-flex align-items-center justify-content-end gap-2">
+                <form method="post" action="/set_currency" class="d-inline-block">
+                    <select name="currency" class="form-select form-select-sm" style="width: auto; min-width: 120px;" onchange="this.form.submit()">
+                        {% for code, symbol in currency_list %}
+                            <option value="{{ code }}" {% if session.currency == code %}selected{% endif %}>{{ code }} ({{ symbol }})</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% if data.income %}
+                    <span class="badge bg-primary fs-6">Monthly Income: {{ get_currency_symbol(session.currency) }}{{ (data.income * session.currency_rate)|round(2) }}</span>
+                {% endif %}
+            </div>
         </div>
     </div>
     {# Show welcome message for new users #}

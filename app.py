@@ -63,11 +63,16 @@ def register_routes(app):
         if base == target:
             return 1.0
         try:
-            url = f"https://v6.exchangerate-api.com/v6/41f126546f9e601c9de74e2c/latest/{base}"
+            # Get API key from environment or use free tier
+            api_key = os.environ.get('EXCHANGE_RATE_API_KEY')
+            url = f"https://v6.exchangerate-api.com/v6/{api_key}/latest/{base}"
             resp = requests.get(url, timeout=5)
             data = resp.json()
-            return data['conversion_rates'][target]
-        except Exception:
+            rate = data['conversion_rates'][target]
+            print(f"DEBUG: Exchange rate {base}->{target}: {rate}")
+            return rate
+        except Exception as e:
+            print(f"DEBUG: Exchange rate error for {base}->{target}: {e}")
             return 1.0
     
     @app.route('/set_currency', methods=['POST', 'GET'])
