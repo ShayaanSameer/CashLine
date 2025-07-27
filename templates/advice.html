@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Advice{% endblock %}
+{% block content %}
+<div id="chatbot-chat-root" style="height: 100%; display: flex; flex-direction: column;">
+    <div id="chatbot-container" style="flex: 1 1 auto; overflow-y: auto; padding: 2.5rem 0.5rem 1rem 0.5rem; display: flex; flex-direction: column; min-height: 0;"></div>
+    <div class="chatbot-input-bar" style="position: sticky; bottom: 0; left: 0; right: 0; background: #fafbfc; padding: 0.5rem 1.5rem 1.5rem 1.5rem; z-index: 20;">
+        <div class="input-group" id="chatbot-input-group">
+            <input type="text" class="form-control rounded-start-4 py-3 fs-5" id="chatbot-input" placeholder="Type your question..." autocomplete="off">
+            <button class="btn btn-primary rounded-end-4 px-4 fs-5" id="chatbot-send-btn">Send</button>
+        </div>
+    </div>
+</div>
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+#chatbot-chat-root { height: calc(100vh - 4rem); min-height: 400px; }
+#chatbot-container { flex: 1 1 auto; overflow-y: auto; padding: 2.5rem 0.5rem 1rem 0.5rem; display: flex; flex-direction: column; min-height: 0; }
+.chatbot-input-bar { position: sticky; bottom: 0; left: 0; right: 0; background: #fafbfc; padding: 0.5rem 1.5rem 1.5rem 1.5rem; z-index: 20; }
+#chatbot-input-group { width: 100%; }
+#chatbot-input { flex: 1 1 auto; font-size: 1.15em; border-radius: 2em 0 0 2em; }
+#chatbot-send-btn { border-radius: 0 2em 2em 0; font-size: 1.15em; }
+.chat-bubble { max-width: 80%; padding: 0.7em 1.1em; border-radius: 1.3em; margin-bottom: 0.7em; font-size: 1.08em; line-height: 1.5; display: inline-block; word-break: break-word; }
+.chat-bubble.bot { background: #e6edfa; color: #232946; align-self: flex-start; }
+.chat-bubble.user { background: #232946; color: #fff; align-self: flex-end; margin-left: auto; }
+@media (max-width: 900px) {
+    #chatbot-chat-root { padding: 0; }
+    #chatbot-container { padding: 1.2rem 0.2rem 1rem 0.2rem; }
+    .chatbot-input-bar { padding: 0.5rem 0.5rem 1rem 0.5rem; }
+}
+</style>
+<script>
+let chatbotContainer = document.getElementById('chatbot-container');
+let chatbotInput = document.getElementById('chatbot-input');
+let chatbotSendBtn = document.getElementById('chatbot-send-btn');
+function addBubble(text, sender) {
+    let bubble = document.createElement('div');
+    bubble.className = 'chat-bubble ' + sender;
+    if (sender === 'bot') {
+        // Extract all bullet lines
+        let bulletLines = text.match(/(^|\n)\* .+/g);
+        let html = text;
+        if (bulletLines) {
+            // Remove bullets from main text
+            html = html.replace(/(^|\n)\* .+/g, '');
+            // Format bullets
+            let bullets = bulletLines.map(line => line.replace(/^\* /, '').replace(/^\n\* /, '')).map(item => `<li>${item.trim()}</li>`).join('');
+            html += `<ul>${bullets}</ul>`;
+        }
+        html = html
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        html = '<p>' + html.trim() + '</p>';
+        bubble.innerHTML = html;
+    } else {
+        bubble.textContent = text;
+    }
+    chatbotContainer.appendChild(bubble);
+    chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
+}
+function sendQuestion() {
+    let val = chatbotInput.value.trim();
+    if (!val) return;
+    addBubble(val, 'user');
+    chatbotInput.value = '';
+    addBubble('Thinking...', 'bot');
+    chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
+    fetch('/advice/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: val })
+    })
+    .then(r => r.json())
+    .then(data => {
+        // Remove the 'Thinking...' bubble
+        let bubbles = chatbotContainer.getElementsByClassName('chat-bubble');
+        if (bubbles.length > 0 && bubbles[bubbles.length-1].textContent === 'Thinking...') {
+            chatbotContainer.removeChild(bubbles[bubbles.length-1]);
+        }
+        if (data.error) {
+            addBubble('Error: ' + data.error, 'bot');
+        } else {
+            addBubble(data.ai_response, 'bot');
+        }
+        chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
+    })
+    .catch(() => {
+        let bubbles = chatbotContainer.getElementsByClassName('chat-bubble');
+        if (bubbles.length > 0 && bubbles[bubbles.length-1].textContent === 'Thinking...') {
+            chatbotContainer.removeChild(bubbles[bubbles.length-1]);
+        }
+        addBubble('Sorry, there was an error. Please try again.', 'bot');
+        chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
+    });
+}
+chatbotSendBtn.onclick = function(e) {
+    e.preventDefault();
+    sendQuestion();
+};
+chatbotInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendQuestion();
+    }
+});
+window.addEventListener('DOMContentLoaded', function() {
+    addBubble("Hi! I'm your budgeting assistant. Ask me anything about budgeting, expenses, or financial goals.", 'bot');
+    chatbotInput.focus();
+    chatbotContainer.scrollTop = chatbotContainer.scrollHeight;
+});
+</script>
+{% endblock %} 

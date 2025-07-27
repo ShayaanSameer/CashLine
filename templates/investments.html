@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Investments{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Investment Portfolio</h1>
+            <a href="/investments/add" class="btn btn-success mb-3 rounded-pill px-4">Add Investment</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm rounded-4 p-4">
+                <table class="table table-bordered bg-white rounded-3 shadow-sm">
+                    <tr>
+                        <th>Symbol</th><th>Shares</th><th>Buy Price</th><th>Current Price</th><th>Value</th><th>Gain/Loss</th><th>Date</th>
+                    </tr>
+                    {% for d in details %}
+                    <tr>
+                        <td>{{ d.symbol }}</td>
+                        <td>{{ d.shares }}</td>
+                        <td>${{ '%.2f'|format(d.purchase_price) }}</td>
+                        <td>${{ '%.2f'|format(d.current_price) }}</td>
+                        <td>${{ '%.2f'|format(d.value) }}</td>
+                        <td style="color: {{ 'green' if d.gain > 0 else 'red' }};">
+                            {{ '+' if d.gain > 0 else '' }}${{ '%.2f'|format(d.gain) }}
+                        </td>
+                        <td>{{ d.purchase_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <h5 class="mt-4">Total Portfolio Value: ${{ '%.2f'|format(total) }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

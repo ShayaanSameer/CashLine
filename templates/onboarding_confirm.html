@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Confirm Onboarding{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Review Your AI-Suggested Budget & Goals</h1>
+            <p class="text-muted">Review the suggested budget split and savings goals below. You can edit them before confirming.</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm rounded-4 p-4 mx-auto" style="max-width: 1100px;">
+                <form method="post" action="/onboarding/confirm">
+                    <input type="hidden" name="income" value="{{ income }}">
+                    <input type="hidden" name="rent" value="{{ rent }}">
+                    {% for b, a in bills %}
+                        <input type="hidden" name="bills[]" value="{{ b }}">
+                        <input type="hidden" name="bill_amounts[]" value="{{ a }}">
+                    {% endfor %}
+                    {% for g in goals %}
+                        <input type="hidden" name="goals" value="{{ g }}">
+                    {% endfor %}
+                    <h5>Budget Split</h5>
+                    <div class="mb-2">
+                        <span id="percent-left" class="fw-bold text-primary"></span>
+                        <span id="amount-left" class="fw-bold text-success ms-3"></span>
+                    </div>
+                    <table class="table table-bordered" id="budget-table">
+                        <thead><tr><th>Category</th><th>Percent</th><th>Amount</th><th>Description</th><th style="width:40px"></th></tr></thead>
+                        <tbody id="budget-tbody">
+                        {% for cat in ai_suggestion.budget_split %}
+                        <tr>
+                            <td><input type="text" name="budget_name[]" class="form-control" value="{{ cat.name }}"></td>
+                            <td><input type="number" name="budget_percent[]" class="form-control percent-input" value="{{ cat.percent }}" min="0" max="100" step="0.01"></td>
+                            <td><input type="number" name="budget_amount[]" class="form-control amount-input align-middle" value="{{ '%.2f'|format((income|float) * (cat.percent|float) / 100) }}" min="0" step="0.01"></td>
+                            <td><input type="text" name="budget_desc[]" class="form-control" value="{{ cat.description }}"></td>
+                            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove"><i class="fa fa-times"></i></button></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                        <tfoot>
+                        <tr id="add-row-tr" style="display:none;">
+                            <td><input type="text" class="form-control" id="new-cat-name" placeholder="New category"></td>
+                            <td><input type="number" class="form-control" id="new-cat-percent" min="0" max="100" placeholder="%" step="0.01"></td>
+                            <td><input type="number" class="form-control" id="new-cat-amount" min="0" step="0.01" placeholder="$"></td>
+                            <td><input type="text" class="form-control" id="new-cat-desc" placeholder="Description"></td>
+                            <td><button type="button" class="btn btn-sm btn-outline-success" id="add-cat-btn"><i class="fa fa-plus"></i></button></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                    <div id="add-cat-hint" class="mb-3"></div>
+                    <script>
+                    function updatePercentLeft() {
+                        let total = 0;
+                        document.querySelectorAll('.percent-input').forEach(function(input) {
+                            total += parseFloat(input.value) || 0;
+                        });
+                        let left = 100 - total;
+                        let income = parseFloat(document.querySelector('input[name="income"]').value) || 0;
+                        let amountLeft = income * left / 100;
+                        document.getElementById('percent-left').textContent = left.toFixed(2) + '% left to allocate';
+                        document.getElementById('amount-left').textContent = '($' + amountLeft.toFixed(2) + ' left to allocate)';
+                        // Show add row if left > 0
+                        document.getElementById('add-row-tr').style.display = left > 0 ? '' : 'none';
+                        document.getElementById('add-cat-hint').textContent = left > 0 ? 'Add a new category below if you have unallocated percent.' : '';
+                    }
+                    function syncAmountsAndPercents(changedInput) {
+                        let income = parseFloat(document.querySelector('input[name="income"]').value) || 0;
+                        document.querySelectorAll('#budget-tbody tr').forEach(function(tr) {
+                            let percentInput = tr.querySelector('input[name="budget_percent[]"]');
+                            let amountInput = tr.querySelector('input[name="budget_amount[]"]');
+                            if (!percentInput || !amountInput) return;
+                            if (changedInput === percentInput) {
+                                // Update amount if percent changed
+                                let percent = parseFloat(percentInput.value) || 0;
+                                let amt = income * percent / 100;
+                                amountInput.value = amt.toFixed(2);
+                            } else if (changedInput === amountInput) {
+                                // Update percent if amount changed
+                                let amt = parseFloat(amountInput.value) || 0;
+                                let percent = income ? (amt / income * 100) : 0;
+                                percentInput.value = percent.toFixed(2);
+                            }
+                        });
+                        updatePercentLeft();
+                    }
+                    function syncNewCatInputs(changedInput) {
+                        let income = parseFloat(document.querySelector('input[name="income"]').value) || 0;
+                        let percentInput = document.getElementById('new-cat-percent');
+                        let amountInput = document.getElementById('new-cat-amount');
+                        if (changedInput === percentInput) {
+                            let percent = parseFloat(percentInput.value) || 0;
+                            let amt = income * percent / 100;
+                            amountInput.value = amt ? amt.toFixed(2) : '';
+                        } else if (changedInput === amountInput) {
+                            let amt = parseFloat(amountInput.value) || 0;
+                            let percent = income ? (amt / income * 100) : 0;
+                            percentInput.value = percent ? percent.toFixed(2) : '';
+                        }
+                    }
+                    document.addEventListener('input', function(e) {
+                        if (e.target.classList.contains('percent-input') || e.target.classList.contains('amount-input') || e.target.name === 'income') {
+                            syncAmountsAndPercents(e.target);
+                        }
+                    });
+                    document.getElementById('new-cat-percent').addEventListener('input', function() { syncNewCatInputs(this); });
+                    document.getElementById('new-cat-amount').addEventListener('input', function() { syncNewCatInputs(this); });
+                    document.addEventListener('DOMContentLoaded', function() {
+                        updatePercentLeft();
+                        document.querySelectorAll('.remove-row').forEach(function(btn) {
+                            btn.onclick = function() {
+                                btn.closest('tr').remove();
+                                updatePercentLeft();
+                            };
+                        });
+                        document.getElementById('add-cat-btn').onclick = function() {
+                            let name = document.getElementById('new-cat-name').value.trim();
+                            let percent = parseFloat(document.getElementById('new-cat-percent').value);
+                            let amt = parseFloat(document.getElementById('new-cat-amount').value);
+                            let desc = document.getElementById('new-cat-desc').value.trim();
+                            if (!name || ((!percent || percent < 0) && (!amt || amt < 0))) return;
+                            let income = parseFloat(document.querySelector('input[name="income"]').value) || 0;
+                            // If only one is filled, calculate the other
+                            if (!percent && amt && income) percent = amt / income * 100;
+                            if (!amt && percent && income) amt = income * percent / 100;
+                            let tr = document.createElement('tr');
+                            tr.innerHTML = `<td><input type="text" name="budget_name[]" class="form-control" value="${name}"></td><td><input type="number" name="budget_percent[]" class="form-control percent-input" value="${percent.toFixed(2)}" min="0" max="100" step="0.01"></td><td><input type="number" name="budget_amount[]" class="form-control amount-input align-middle" value="${amt.toFixed(2)}" min="0" step="0.01"></td><td><input type="text" name="budget_desc[]" class="form-control" value="${desc}"></td><td><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove"><i class="fa fa-times"></i></button></td>`;
+                            tr.querySelector('.remove-row').onclick = function() { tr.remove(); updatePercentLeft(); };
+                            document.getElementById('budget-tbody').appendChild(tr);
+                            document.getElementById('new-cat-name').value = '';
+                            document.getElementById('new-cat-percent').value = '';
+                            document.getElementById('new-cat-amount').value = '';
+                            document.getElementById('new-cat-desc').value = '';
+                            updatePercentLeft();
+                        };
+                        // Initial sync
+                        document.querySelectorAll('.percent-input, .amount-input').forEach(function(input) {
+                            syncAmountsAndPercents(input);
+                        });
+                    });
+                    </script>
+                    <h5 class="mt-4">Savings Goals</h5>
+                    <table class="table table-bordered">
+                        <thead><tr><th>Name</th><th>Target Amount</th><th>Deadline</th><th>Description</th></tr></thead>
+                        <tbody>
+                        {% for goal in ai_suggestion.savings_goals %}
+                        <tr>
+                            <td><input type="text" name="goal_name[]" class="form-control" value="{{ goal.name }}"></td>
+                            <td><input type="number" name="goal_target[]" class="form-control" value="{{ goal.target_amount }}" step="0.01"></td>
+                            <td><input type="date" name="goal_deadline[]" class="form-control" value="{{ goal.deadline }}"></td>
+                            <td><input type="text" name="goal_desc[]" class="form-control" value="{{ goal.description }}"></td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">Confirm and Save</button>
+                    <a href="/onboarding" class="btn btn-link">Back</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

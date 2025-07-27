@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Edit Expense{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Edit Expense</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm rounded-4 p-4">
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Category:</label>
+                        <select name="category" class="form-select rounded-3" required>
+                          {% for cat in budget_categories %}
+                            <option value="{{ cat }}" {% if expense[2] == cat %}selected{% endif %}>{{ cat }}</option>
+                          {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount:</label>
+                        <input type="number" name="amount" step="0.01" class="form-control rounded-3" value="{{ expense[1] }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description:</label>
+                        <input type="text" name="description" class="form-control rounded-3" value="{{ expense[3] }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date:</label>
+                        <input type="date" name="date" class="form-control rounded-3" value="{{ expense[4] }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Currency:</label>
+                        <input type="text" name="currency" class="form-control rounded-3" value="{{ expense[5] }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4">Save Changes</button>
+                    <a href="/expenses" class="btn btn-secondary rounded-pill ms-2 px-4">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

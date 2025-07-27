@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Budgeting App{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined|Material+Icons+Round" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: #fafbfc;
+            font-family: 'Inter', sans-serif;
+        }
+        .layout-root {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        #sidebar-wrapper {
+            width: 220px;
+            min-width: 220px;
+            background: #fff;
+            border-right: 1.5px solid #e6edfa;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 16px rgba(44,44,84,0.04);
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 1.1rem 1.2rem 0.7rem 1.2rem;
+            font-size: 1.3em;
+            font-weight: 800;
+            color: #232946;
+            letter-spacing: 1.5px;
+            border-bottom: 1px solid #f0f2f7;
+        }
+        .sidebar-top {
+            padding: 0.7rem 1.2rem 0.7rem 1.2rem;
+            border-bottom: 1px solid #f0f2f7;
+            text-align: left;
+        }
+        .sidebar-date {
+            font-size: 1.08em;
+            font-weight: 700;
+            color: #232946;
+            margin-bottom: 0.1em;
+            letter-spacing: 0.01em;
+        }
+        .sidebar-time {
+            font-size: 0.98em;
+            color: #8a94a6;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .sidebar-list {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            padding: 0 0.2rem;
+            margin-top: 0.7rem;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 0.55rem 1.1rem;
+            margin-bottom: 0.15rem;
+            border-radius: 1.5rem;
+            font-size: 1.01rem;
+            color: #232946;
+            text-decoration: none;
+            transition: background 0.16s, color 0.16s;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .sidebar-item i.material-icons-round, .sidebar-item i.material-icons-outlined {
+            font-size: 1.35em;
+            margin-right: 0.85em;
+            color: #3b3f5c;
+            transition: color 0.16s;
+        }
+        .sidebar-item.active, .sidebar-item:hover {
+            background: #e6edfa;
+            color: #232946;
+        }
+        .sidebar-item.active i, .sidebar-item:hover i {
+            color: #232946;
+        }
+        .sidebar-bottom {
+            margin: 1.2rem 1.2rem 1.2rem 1.2rem;
+            font-size: 0.98em;
+            color: #8a94a6;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+            color: white;
+        }
+        @media (max-width: 900px) {
+            #sidebar-wrapper {
+                width: 100vw;
+                min-width: 0;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1.5px solid #e6edfa;
+                flex-direction: row;
+                box-shadow: none;
+            }
+            .sidebar-list {
+                flex-direction: row;
+                margin-top: 0;
+                padding: 0 0.5rem;
+            }
+            .sidebar-item {
+                margin-bottom: 0;
+                margin-right: 0.5rem;
+                border-radius: 1.2rem;
+                font-size: 1em;
+                padding: 0.7rem 1rem;
+            }
+            .sidebar-bottom, .sidebar-logo, .sidebar-top {
+                display: none;
+            }
+        }
+        .main-content {
+            flex: 1 1 0%;
+            min-width: 0;
+            height: 100vh;
+            padding: 2.5rem 2rem;
+            overflow-y: auto;
+            background: #fafbfc;
+        }
+    </style>
+</head>
+<body style="padding-top:0; margin-top:0;">
+<div class="layout-root" style="margin-top:0;">
+    <div id="sidebar-wrapper">
+        <div class="sidebar-logo">
+            <span>CashLine</span>
+        </div>
+        <div class="sidebar-top">
+            <div class="sidebar-date" id="sidebar-date"></div>
+            <div class="sidebar-time" id="sidebar-time"></div>
+        </div>
+        <div class="sidebar-list">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-item {% if request.path == url_for('dashboard') %}active{% endif %}">
+                <i class="material-icons-round">home</i> <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('budget') }}" class="sidebar-item {% if request.path.startswith('/budget') %}active{% endif %}">
+                <i class="material-icons-round">account_balance_wallet</i> <span>Budgets</span>
+            </a>
+            <a href="{{ url_for('expenses') }}" class="sidebar-item {% if request.path.startswith('/expenses') %}active{% endif %}">
+                <i class="material-icons-round">receipt_long</i> <span>Expenses</span>
+            </a>
+            <a href="{{ url_for('investments') }}" class="sidebar-item {% if request.path.startswith('/investments') %}active{% endif %}">
+                <i class="material-icons-round">show_chart</i> <span>Investments</span>
+            </a>
+            <a href="{{ url_for('advice') }}" class="sidebar-item {% if request.path.startswith('/advice') %}active{% endif %}">
+                <i class="material-icons-round">lightbulb</i> <span>Advice</span>
+            </a>
+            <a href="{{ url_for('goals') }}" class="sidebar-item {% if request.path.startswith('/goals') %}active{% endif %}">
+                <i class="material-icons-round">flag</i> <span>Goals</span>
+            </a>
+        </div>
+        {% if current_user.is_authenticated %}
+        <div class="px-3 my-2">
+            <div class="user-info">
+                <i class="material-icons-round">account_circle</i>
+                <span>{{ current_user.username }}</span>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn w-100 d-block text-center">
+                <i class="fa-solid fa-sign-out-alt me-2"></i>Logout
+            </a>
+        </div>
+        {% endif %}
+        <div class="sidebar-bottom">
+            <span>&copy; {{ current_year }} CashLine</span>
+        </div>
+    </div>
+    <script>
+        function updateSidebarDateTime() {
+            const dateElem = document.getElementById('sidebar-date');
+            const timeElem = document.getElementById('sidebar-time');
+            const now = new Date();
+            const dateStr = now.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            if (dateElem) dateElem.textContent = dateStr;
+            if (timeElem) timeElem.textContent = timeStr;
+        }
+        updateSidebarDateTime();
+        setInterval(updateSidebarDateTime, 10000);
+    </script>
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<!-- Bootstrap JS for modals -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 

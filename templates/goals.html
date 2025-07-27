@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Goals{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Savings Goals</h1>
+            <a href="/goals/add" class="btn btn-success mb-3 rounded-pill px-4">Add Goal</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm rounded-4 p-4">
+                <table class="table table-bordered bg-white rounded-3 shadow-sm">
+                    <tr>
+                        <th>Name</th><th>Target</th><th>Saved</th><th>Deadline</th><th>Progress</th><th>Actions</th>
+                    </tr>
+                    {% for g in goals %}
+                    <tr>
+                        <td>{{ g[1] }}</td>
+                        <td>${{ '%.2f'|format(g[2]) }}</td>
+                        <td>${{ '%.2f'|format(g[3]) }}</td>
+                        <td>{{ g[4] if g[4] else 'No deadline' }}</td>
+                        <td style="min-width:120px;">
+                            {% set percent = (g[3] / g[2] * 100) if g[2] else 0 %}
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" style="width: {{ percent|round(0) }}%"></div>
+                            </div>
+                            <small>{{ percent|round(0) }}%</small>
+                        </td>
+                        <td>
+                            <a href="/goals/edit/{{ g[0] }}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                            <form method="post" action="/goals/delete/{{ g[0] }}" style="display:inline;" onsubmit="return confirm('Delete this goal?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% if not goals or goals|length == 0 %}
+                    <div class="text-muted">No goals yet. Click "Add Goal" to create one!</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

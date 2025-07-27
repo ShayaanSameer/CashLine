@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: budget-tracker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+    autoDeploy: true
+
+databases:
+  - name: budget-tracker-db
+    databaseName: budgettracker
+    user: budgettracker 

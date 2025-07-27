@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Add Investment{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Add Investment</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm rounded-4 p-4">
+                {% if message %}<p class="text-success">{{ message }}</p>{% endif %}
+                {% if error %}<p class="text-danger">{{ error }}</p>{% endif %}
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Stock Symbol:</label>
+                        <select id="top-stocks-dropdown" class="form-select mb-2">
+                            <option value="">-- Select from top 20 stocks --</option>
+                            <option value="AAPL">Apple (AAPL)</option>
+                            <option value="MSFT">Microsoft (MSFT)</option>
+                            <option value="GOOGL">Alphabet (GOOGL)</option>
+                            <option value="AMZN">Amazon (AMZN)</option>
+                            <option value="NVDA">Nvidia (NVDA)</option>
+                            <option value="META">Meta Platforms (META)</option>
+                            <option value="TSLA">Tesla (TSLA)</option>
+                            <option value="BRK.B">Berkshire Hathaway (BRK.B)</option>
+                            <option value="JPM">JPMorgan Chase (JPM)</option>
+                            <option value="JNJ">Johnson & Johnson (JNJ)</option>
+                            <option value="XOM">Exxon Mobil (XOM)</option>
+                            <option value="UNH">UnitedHealth Group (UNH)</option>
+                            <option value="V">Visa (V)</option>
+                            <option value="PG">Procter & Gamble (PG)</option>
+                            <option value="LLY">Eli Lilly (LLY)</option>
+                            <option value="AVGO">Broadcom (AVGO)</option>
+                            <option value="MA">Mastercard (MA)</option>
+                            <option value="HD">Home Depot (HD)</option>
+                            <option value="WMT">Walmart (WMT)</option>
+                            <option value="COST">Costco (COST)</option>
+                        </select>
+                        <input type="text" name="symbol" class="form-control rounded-3" id="symbol-input" required placeholder="Enter symbol (e.g. AAPL)">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description:</label>
+                        <input type="text" name="description" class="form-control rounded-3" placeholder="Company name or notes">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Shares:</label>
+                        <input type="number" name="shares" step="0.01" class="form-control rounded-3" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Purchase Price:</label>
+                        <input type="number" name="purchase_price" step="0.01" class="form-control rounded-3" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Purchase Date:</label>
+                        <input type="date" name="purchase_date" class="form-control rounded-3">
+                    </div>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">Add Investment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dropdown = document.getElementById('top-stocks-dropdown');
+    var symbolInput = document.getElementById('symbol-input');
+    var descInput = document.querySelector('input[name="description"]');
+    dropdown.addEventListener('change', function() {
+        var val = this.value;
+        var text = this.options[this.selectedIndex].text;
+        if (val) {
+            symbolInput.value = val;
+            symbolInput.dispatchEvent(new Event('input'));
+            if (descInput && (!descInput.value || descInput.value.trim() === '')) {
+                var company = text.replace(/\s*\([^)]+\)\s*$/, '');
+                descInput.value = company;
+            }
+        }
+    });
+    symbolInput.addEventListener('input', function() {
+        var val = symbolInput.value.trim().toUpperCase();
+        var found = false;
+        for (var i = 0; i < dropdown.options.length; i++) {
+            if (dropdown.options[i].value.toUpperCase() === val) {
+                dropdown.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+        if (!found) dropdown.selectedIndex = 0;
+    });
+});
+</script> 
