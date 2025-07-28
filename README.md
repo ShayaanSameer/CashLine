@@ -1,39 +1,68 @@
-# Budget Tracker Web Application
+# CashLine - Personal Finance Management Platform
 
-A modern, user-friendly budgeting application with authentication, expense tracking, investment management, and financial goals.
+A comprehensive personal finance management application built with Flask, featuring budgeting, expense tracking, investment portfolio management, retirement planning, and AI-powered financial advice.
+
+## Live Demo
+
+**Access the deployed application:** [https://cashline-lvfj.onrender.com](https://cashline-lvfj.onrender.com)
 
 ## Features
 
-- 🔐 **User Authentication** - Secure login and registration system
-- 💰 **Budget Management** - Create and track monthly budgets by category
-- 📊 **Expense Tracking** - Log and categorize expenses with currency conversion
-- 📈 **Investment Portfolio** - Track stock investments and portfolio performance
-- 🎯 **Financial Goals** - Set and monitor savings goals
-- 💡 **AI-Powered Advice** - Get personalized financial advice
-- 🌍 **Multi-Currency Support** - Track expenses in different currencies
-- 📱 **Responsive Design** - Works on desktop and mobile devices
+### Core Financial Management
+- **Budget Tracking**: Create and manage monthly budgets by category
+- **Expense Tracking**: Log and categorize expenses with detailed descriptions
+- **Financial Goals**: Set and track progress towards financial goals
+- **Multi-Currency Support**: Support for USD, EUR, GBP, INR, CAD, AUD, and more
 
-## Tech Stack
+### Investment Portfolio Management
+- **Portfolio Overview**: Real-time tracking of investment holdings
+- **Stock Price Integration**: Live stock prices via Finnhub API
+- **Asset Allocation**: Strategic portfolio allocation with risk assessment
+- **Performance Analytics**: Gain/loss tracking and return calculations
+- **Weighted Return Calculations**: Advanced portfolio performance metrics
 
-- **Backend**: Flask (Python)
-- **Database**: SQLAlchemy with PostgreSQL (production) / SQLite (development)
-- **Authentication**: Flask-Login
-- **Frontend**: Bootstrap 5, HTML5, CSS3, JavaScript
-- **Deployment**: Render (free tier)
+### Retirement Planning
+- **Retirement Calculator**: Multi-scenario retirement planning with different risk levels
+- **Asset Allocation**: Strategic retirement portfolio management
+- **Retirement Profile**: Personalized retirement planning based on age, income, and goals
+- **Automated Planning**: AI-powered retirement strategy recommendations
+- **Scenario Comparison**: Compare conservative, moderate, and aggressive approaches
 
-## Quick Start
+### AI-Powered Financial Advice
+- **Personalized Recommendations**: AI advice based on your financial data
+- **Context-Aware Suggestions**: Recommendations considering your income, expenses, goals, and investments
+- **Real-time Chat**: Interactive financial advice through chat interface
+- **Gemini AI Integration**: Powered by Google's Gemini AI for intelligent financial guidance
 
-### Local Development
+### Dashboard & Analytics
+- **Interactive Charts**: Visual representation of spending trends and budget vs actual
+- **Financial Overview**: Comprehensive snapshot of your financial health
+- **Progress Tracking**: Visual progress indicators for goals and budgets
+- **Real-time Updates**: Live data updates across all modules
+
+### Security & User Management
+- **User Authentication**: Secure login and registration system
+- **Session Management**: Persistent user sessions with security
+- **Data Privacy**: User-specific data isolation and protection
+
+## Local Development Setup
+
+### Prerequisites
+- Python 3.8 or higher
+- pip (Python package installer)
+- Git
+
+### Installation Steps
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
-   cd BudgetingWeb
+   git clone https://github.com/yourusername/cashline.git
+   cd cashline/Budgeting/BudgetingWeb
    ```
 
-2. **Create virtual environment**
+2. **Create and activate virtual environment**
    ```bash
-   python -m venv venv
+   python3 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
@@ -44,201 +73,164 @@ A modern, user-friendly budgeting application with authentication, expense track
 
 4. **Set up environment variables**
    ```bash
-   cp env.example .env
-   # Edit .env with your configuration
+   cp .env.example .env
+   ```
+   
+   Edit `.env` file with your API keys:
+   ```
+   GEMINI_API_KEY=your_gemini_api_key_here
+   FINNHUB_API_KEY=your_finnhub_api_key_here
+   EXCHANGE_RATE_API_KEY=your_exchange_rate_api_key_here
+   SECRET_KEY=your_secret_key_here
    ```
 
-5. **Initialize database**
+5. **Initialize the database**
    ```bash
-   python manage.py create_db
+   python3 app.py
    ```
+   The database will be automatically created on first run.
 
 6. **Run the application**
    ```bash
-   python app.py
+   python3 app.py
    ```
 
 7. **Access the application**
-   Open http://localhost:5000 in your browser
+   Open your browser and navigate to `http://localhost:5000`
 
-### Free Hosting on Render
+### API Keys Required
 
-#### Option 1: One-Click Deploy (Recommended)
+- **Gemini AI API**: For AI-powered financial advice
+  - Get from: [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **Finnhub API**: For real-time stock prices
+  - Get from: [Finnhub](https://finnhub.io/)
+- **Exchange Rate API**: For currency conversions
+  - Get from: [Exchange Rate API](https://www.exchangerate-api.com/)
 
-1. **Fork this repository** to your GitHub account
-
-2. **Deploy to Render**
-   - Go to [render.com](https://render.com)
-   - Sign up with your GitHub account
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Select the repository
-   - Render will automatically detect the Python app
-
-3. **Configure Environment Variables**
-   - In your Render dashboard, go to your service
-   - Navigate to "Environment" tab
-   - Add the following variables:
-     - `SECRET_KEY`: Generate a random string
-     - `GEMINI_API_KEY`: Your Gemini API key (optional)
-     - `DATABASE_URL`: Will be auto-configured by Render
-
-4. **Deploy**
-   - Click "Create Web Service"
-   - Render will automatically build and deploy your app
-
-#### Option 2: Manual Deployment
-
-1. **Create a Render account** at [render.com](https://render.com)
-
-2. **Create a new Web Service**
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Configure the service:
-     - **Name**: budget-tracker
-     - **Environment**: Python
-     - **Build Command**: `pip install -r requirements.txt`
-     - **Start Command**: `gunicorn app:app`
-
-3. **Add Environment Variables**
-   - `SECRET_KEY`: Generate a random string
-   - `GEMINI_API_KEY`: Your Gemini API key (optional)
-
-4. **Create Database**
-   - Click "New +" → "PostgreSQL"
-   - Name: budget-tracker-db
-   - Render will automatically link it to your web service
-
-5. **Deploy**
-   - Click "Create Web Service"
-   - Your app will be available at `https://your-app-name.onrender.com`
-
-## Database Setup
-
-The application uses SQLAlchemy with automatic migrations. The database will be created automatically when you first run the application.
-
-### Local Development
-- SQLite database (stored in `budgeting.db`)
-
-### Production (Render)
-- PostgreSQL database (automatically provisioned by Render)
-
-## Environment Variables
-
-| Variable | Description | Required | Default |
-|----------|-------------|----------|---------|
-| `SECRET_KEY` | Flask secret key for sessions | Yes | Auto-generated |
-| `DATABASE_URL` | Database connection string | No | SQLite local |
-| `GEMINI_API_KEY` | Google Gemini API key | No | None |
-| `FLASK_ENV` | Flask environment | No | development |
-
-## API Keys
-
-### Gemini API (Optional)
-For AI-powered financial advice:
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Create a new API key
-3. Add it to your environment variables as `GEMINI_API_KEY`
-
-## Features in Detail
-
-### Authentication
-- User registration and login
-- Secure password hashing
-- Session management
-- User-specific data isolation
-
-### Budget Management
-- Create monthly budgets by category
-- Track spending against budgets
-- Visual progress indicators
-- Budget vs actual comparisons
-
-### Expense Tracking
-- Log expenses with categories
-- Multi-currency support
-- Automatic USD conversion
-- Date-based filtering
-
-### Investment Portfolio
-- Track stock purchases
-- Portfolio value calculation
-- Investment performance metrics
-- Purchase history
-
-### Financial Goals
-- Set savings targets
-- Track progress
-- Deadline management
-- Goal completion tracking
-
-### AI Financial Advice
-- Personalized recommendations
-- Budget optimization tips
-- Financial goal suggestions
-- Spending pattern analysis
-
-## File Structure
+## Project Structure
 
 ```
-BudgetingWeb/
-├── app.py                 # Main Flask application
-├── config.py             # Configuration settings
-├── models.py             # Database models
-├── forms.py              # Form definitions
-├── requirements.txt      # Python dependencies
-├── manage.py            # Database management
-├── build.sh             # Build script for deployment
-├── render.yaml          # Render deployment config
-├── templates/           # HTML templates
-│   ├── base.html
-│   ├── login.html
-│   ├── register.html
-│   ├── dashboard.html
-│   └── ...
-├── static/              # Static files (CSS, JS)
-└── db/                  # Database operations
+Budgeting/
+├── BudgetingWeb/
+│   ├── app.py                 # Main Flask application
+│   ├── config.py              # Configuration settings
+│   ├── models.py              # Database models
+│   ├── forms.py               # Flask-WTF forms
+│   ├── static/
+│   │   └── style.css         # Custom styling
+│   ├── templates/             # HTML templates
+│   │   ├── base.html         # Base template
+│   │   ├── dashboard.html    # Main dashboard
+│   │   ├── budget.html       # Budget management
+│   │   ├── expenses.html     # Expense tracking
+│   │   ├── portfolio.html    # Investment portfolio
+│   │   └── ...               # Other templates
+│   └── db/                   # Database files
+├── requirements.txt           # Python dependencies
+└── README.md                 # This file
+```
+
+## Design Features
+
+### Modern UI/UX
+- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile
+- **Pastel Color Scheme**: Soothing, professional color palette
+- **Card-based Layout**: Clean, organized information presentation
+- **Interactive Elements**: Hover effects, progress bars, and dynamic charts
+
+### User Experience
+- **Intuitive Navigation**: Easy-to-use interface with clear navigation
+- **Real-time Updates**: Live data updates without page refreshes
+- **Form Validation**: Comprehensive input validation and error handling
+- **Loading States**: Visual feedback during data processing
+
+## Configuration
+
+### Environment Variables
+- `GEMINI_API_KEY`: Required for AI advice functionality
+- `FINNHUB_API_KEY`: Required for stock price data
+- `EXCHANGE_RATE_API_KEY`: Required for currency conversions
+- `SECRET_KEY`: Flask secret key for session management
+- `DATABASE_URL`: Database connection string (optional)
+
+### Database Configuration
+The application uses SQLite by default for local development. For production, you can configure PostgreSQL or MySQL.
+
+## Deployment
+
+### Render Deployment
+The application is deployed on Render.com with the following configuration:
+- **Runtime**: Python 3.9
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `python app.py`
+- **Environment Variables**: Configured through Render dashboard
+
+### Local Production Setup
+1. Set `FLASK_ENV=production` in environment variables
+2. Configure a production database (PostgreSQL recommended)
+3. Set up proper logging and monitoring
+4. Configure HTTPS and security headers
+
+## API Endpoints
+
+### Authentication
+- `POST /login` - User login
+- `POST /register` - User registration
+- `GET /logout` - User logout
+
+### Financial Management
+- `GET /` - Dashboard
+- `GET /budget` - Budget management
+- `GET /expenses` - Expense tracking
+- `GET /goals` - Financial goals
+
+### Portfolio Management
+- `GET /portfolio` - Portfolio overview
+- `GET /portfolio/holdings` - Investment holdings
+- `GET /portfolio/allocation` - Asset allocation
+
+### Retirement Planning
+- `GET /portfolio/retirement` - Retirement planning
+- `GET /portfolio/retirement/calculator` - Retirement calculator
+- `GET /portfolio/retirement/profile` - Retirement profile
+
+### AI Features
+- `GET /advice` - Financial advice
+- `POST /advice/chat` - AI chat interface
+
+## Testing
+
+Run the test suite:
+```bash
+python -m pytest tests/
 ```
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-This project is open source and available under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- **Flask**: Web framework
+- **SQLAlchemy**: Database ORM
+- **Bootstrap**: UI framework
+- **Chart.js**: Data visualization
+- **Google Gemini AI**: AI-powered financial advice
+- **Finnhub**: Stock market data
+- **Exchange Rate API**: Currency conversion
 
 ## Support
 
-For issues and questions:
-- Create an issue on GitHub
-- Check the documentation
-- Review the code comments
+For support, please open an issue on GitHub or contact the development team.
 
-## Free Hosting Alternatives
+---
 
-If Render doesn't work for you, here are other free options:
-
-1. **Railway** - $5 credit monthly, very easy deployment
-2. **PythonAnywhere** - Python-focused hosting
-3. **Heroku** - No longer free but still popular
-4. **Vercel** - Great for static sites, requires external database
-
-## Security Notes
-
-- All passwords are hashed using Werkzeug
-- User sessions are managed securely
-- Database queries are protected against SQL injection
-- Environment variables are used for sensitive data
-- HTTPS is enforced in production
-
-## Performance Tips
-
-- Database queries are optimized
-- Static assets are cached
-- Lazy loading for large datasets
-- Efficient currency conversion caching 
+**CashLine** - Your comprehensive personal finance companion.
