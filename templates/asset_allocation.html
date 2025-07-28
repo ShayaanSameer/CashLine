@@ -25,14 +25,6 @@
                         <h5 class="mb-0">Portfolio Summary</h5>
                     </div>
                     <div class="card-body">
-                        {% set total_weight = 0 %}
-                        {% set weighted_return = 0 %}
-                        
-                        {% for asset in assets %}
-                            {% set total_weight = total_weight + asset.weight %}
-                            {% set weighted_return = weighted_return + (asset.expected_return * asset.weight / 100) %}
-                        {% endfor %}
-                        
                         <div class="row">
                             <div class="col-md-3">
                                 <h6 class="text-muted">Total Assets</h6>
@@ -46,7 +38,13 @@
                             </div>
                             <div class="col-md-3">
                                 <h6 class="text-muted">Weighted Return</h6>
-                                <h4>{{ "%.1f"|format(weighted_return) }}%</h4>
+                                <h4>
+                                    {% if total_weight > 0 %}
+                                        {{ "%.1f"|format(weighted_return) }}%
+                                    {% else %}
+                                        0.0%
+                                    {% endif %}
+                                </h4>
                             </div>
                             <div class="col-md-3">
                                 <h6 class="text-muted">Risk Level</h6>

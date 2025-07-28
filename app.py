@@ -785,7 +785,12 @@ def register_routes(app):
     def asset_allocation():
         """Manage retirement portfolio asset allocation"""
         assets = Asset.query.filter_by(user_id=current_user.id).all()
-        return render_template('asset_allocation.html', assets=assets)
+        
+        # Calculate portfolio summary
+        total_weight = sum(asset.weight for asset in assets)
+        weighted_return = sum(asset.expected_return * asset.weight / 100 for asset in assets)
+        
+        return render_template('asset_allocation.html', assets=assets, total_weight=total_weight, weighted_return=weighted_return)
 
     @app.route('/portfolio/allocation/add', methods=['GET', 'POST'])
     @login_required
