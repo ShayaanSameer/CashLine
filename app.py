@@ -1854,8 +1854,6 @@ def register_routes(app):
     def test_onboarding():
         return "Onboarding route is working!"
     
-
-    
     @app.route('/onboarding/confirm', methods=['POST'])
     def onboarding_confirm():
         income = request.form.get('income')
