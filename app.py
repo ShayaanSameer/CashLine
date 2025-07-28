@@ -1062,91 +1062,152 @@ def register_routes(app):
     @login_required
     def retirement_calculator():
         """Multi-scenario retirement calculator"""
-        form = RetirementCalculatorForm()
-        
-        if form.validate_on_submit():
-            # Calculate multiple scenarios
-            scenarios = []
+        try:
+            form = RetirementCalculatorForm()
             
-            # Conservative scenario
-            conservative = {
-                'name': 'Conservative',
-                'expected_return': 5.0,
-                'risk_level': 'Low',
-                'monthly_savings': calculate_monthly_savings(
-                    form.target_amount.data,
-                    form.current_savings.data,
-                    form.years_to_retirement.data,
-                    5.0
-                )
-            }
-            scenarios.append(conservative)
+            if form.validate_on_submit():
+                # Calculate multiple scenarios
+                scenarios = []
+                
+                # Conservative scenario
+                conservative = {
+                    'name': 'Conservative',
+                    'expected_return': 5.0,
+                    'risk_level': 'Low',
+                    'monthly_savings': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        5.0
+                    ),
+                    'retirement_age': 65,
+                    'years_to_retirement': form.years_to_retirement.data,
+                    'target_amount': form.target_amount.data,
+                    'retirement_income': form.target_amount.data * 0.04,  # 4% withdrawal rule
+                    'monthly_contribution_needed': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        5.0
+                    ),
+                    'description': 'Lower risk approach with conservative returns'
+                }
+                scenarios.append(conservative)
+                
+                # Moderate scenario
+                moderate = {
+                    'name': 'Moderate',
+                    'expected_return': 7.0,
+                    'risk_level': 'Medium',
+                    'monthly_savings': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        7.0
+                    ),
+                    'retirement_age': 65,
+                    'years_to_retirement': form.years_to_retirement.data,
+                    'target_amount': form.target_amount.data,
+                    'retirement_income': form.target_amount.data * 0.04,  # 4% withdrawal rule
+                    'monthly_contribution_needed': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        7.0
+                    ),
+                    'description': 'Balanced approach with moderate risk and returns'
+                }
+                scenarios.append(moderate)
+                
+                # Aggressive scenario
+                aggressive = {
+                    'name': 'Aggressive',
+                    'expected_return': 9.0,
+                    'risk_level': 'High',
+                    'monthly_savings': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        9.0
+                    ),
+                    'retirement_age': 65,
+                    'years_to_retirement': form.years_to_retirement.data,
+                    'target_amount': form.target_amount.data,
+                    'retirement_income': form.target_amount.data * 0.04,  # 4% withdrawal rule
+                    'monthly_contribution_needed': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        9.0
+                    ),
+                    'description': 'Higher risk approach with potential for higher returns'
+                }
+                scenarios.append(aggressive)
+                
+                # Custom scenario
+                custom = {
+                    'name': 'Custom',
+                    'expected_return': form.expected_return.data,
+                    'risk_level': 'Custom',
+                    'monthly_savings': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        form.expected_return.data
+                    ),
+                    'retirement_age': 65,
+                    'years_to_retirement': form.years_to_retirement.data,
+                    'target_amount': form.target_amount.data,
+                    'retirement_income': form.target_amount.data * 0.04,  # 4% withdrawal rule
+                    'monthly_contribution_needed': calculate_monthly_savings(
+                        form.target_amount.data,
+                        form.current_savings.data,
+                        form.years_to_retirement.data,
+                        form.expected_return.data
+                    ),
+                    'description': 'Custom scenario based on your input parameters'
+                }
+                scenarios.append(custom)
+                
+                return render_template('retirement_calculator.html', 
+                                     form=form, 
+                                     scenarios=scenarios,
+                                     show_results=True)
             
-            # Moderate scenario
-            moderate = {
-                'name': 'Moderate',
-                'expected_return': 7.0,
-                'risk_level': 'Medium',
-                'monthly_savings': calculate_monthly_savings(
-                    form.target_amount.data,
-                    form.current_savings.data,
-                    form.years_to_retirement.data,
-                    7.0
-                )
-            }
-            scenarios.append(moderate)
-            
-            # Aggressive scenario
-            aggressive = {
-                'name': 'Aggressive',
-                'expected_return': 9.0,
-                'risk_level': 'High',
-                'monthly_savings': calculate_monthly_savings(
-                    form.target_amount.data,
-                    form.current_savings.data,
-                    form.years_to_retirement.data,
-                    9.0
-                )
-            }
-            scenarios.append(aggressive)
-            
-            # Custom scenario
-            custom = {
-                'name': 'Custom',
-                'expected_return': form.expected_return.data,
-                'risk_level': 'Custom',
-                'monthly_savings': calculate_monthly_savings(
-                    form.target_amount.data,
-                    form.current_savings.data,
-                    form.years_to_retirement.data,
-                    form.expected_return.data
-                )
-            }
-            scenarios.append(custom)
-            
-            return render_template('retirement_calculator.html', 
-                                 form=form, 
-                                 scenarios=scenarios,
-                                 show_results=True)
-        
-        return render_template('retirement_calculator.html', form=form)
+            return render_template('retirement_calculator.html', form=form)
+        except Exception as e:
+            print(f"Error in retirement_calculator: {e}")
+            flash(f'An error occurred: {str(e)}', 'error')
+            return render_template('retirement_calculator.html', form=form)
 
     def calculate_monthly_savings(target_amount, current_savings, years, expected_return):
         """Calculate required monthly savings to reach target"""
-        if years <= 0:
+        try:
+            if years <= 0:
+                return 0
+            
+            future_value = target_amount
+            present_value = current_savings
+            rate = expected_return / 100
+            n = years * 12  # monthly periods
+            
+            if rate > 0:
+                # Avoid division by zero and handle edge cases
+                if rate == 0:
+                    monthly_savings = (future_value - present_value) / n
+                else:
+                    monthly_rate = rate / 12
+                    if monthly_rate == 0:
+                        monthly_savings = (future_value - present_value) / n
+                    else:
+                        monthly_savings = (future_value - present_value * (1 + monthly_rate)**n) / (((1 + monthly_rate)**n - 1) / monthly_rate)
+            else:
+                monthly_savings = (future_value - present_value) / n
+            
+            return max(0, monthly_savings)
+        except Exception as e:
+            print(f"Error in calculate_monthly_savings: {e}")
             return 0
-        
-        future_value = target_amount
-        present_value = current_savings
-        rate = expected_return / 100
-        n = years * 12  # monthly periods
-        
-        if rate > 0:
-            monthly_savings = (future_value - present_value * (1 + rate/12)**n) / (((1 + rate/12)**n - 1) / (rate/12))
-        else:
-            monthly_savings = (future_value - present_value) / n
-        
-        return max(0, monthly_savings)
 
     def summarize_user_financial_context():
         """Summarize the user's current financial situation for AI context"""

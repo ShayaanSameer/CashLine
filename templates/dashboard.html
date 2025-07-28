@@ -347,9 +347,28 @@ const spendingChart = new Chart(spendingCtx, {
         scales: {
             y: {
                 beginAtZero: true,
+                max: function() {
+                    const maxSpending = Math.max(...[
+                        {{ (data.weekly_spending[0] * session.currency_rate)|round(2) }},
+                        {{ (data.weekly_spending[1] * session.currency_rate)|round(2) }},
+                        {{ (data.weekly_spending[2] * session.currency_rate)|round(2) }},
+                        {{ (data.weekly_spending[3] * session.currency_rate)|round(2) }}
+                    ]);
+                    const maxBudget = {{ (data.chart_budget * session.currency_rate)|round(2) }};
+                    return Math.max(maxSpending, maxBudget) * 1.2; // Add 20% padding
+                },
                 ticks: {
                     callback: function(value) {
                         return '{{ get_currency_symbol(session.currency) }}' + value.toLocaleString();
+                    },
+                    stepSize: function() {
+                        const max = Math.max(...[
+                            {{ (data.weekly_spending[0] * session.currency_rate)|round(2) }},
+                            {{ (data.weekly_spending[1] * session.currency_rate)|round(2) }},
+                            {{ (data.weekly_spending[2] * session.currency_rate)|round(2) }},
+                            {{ (data.weekly_spending[3] * session.currency_rate)|round(2) }}
+                        ]);
+                        return Math.ceil(max / 4); // Divide into 4-5 ticks
                     }
                 }
             }

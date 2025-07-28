@@ -99,11 +99,11 @@
             <!-- Results -->
             {% if scenarios %}
             <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">Retirement Scenarios Comparison</h4>
+                <div class="card-header" style="background-color: #e8f5e8; border-color: #c3e6c3;">
+                    <h4 class="mb-0" style="color: #2d5a2d;">Retirement Scenarios Comparison</h4>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info">
+                    <div class="alert" style="background-color: #f0f8ff; border-color: #b3d9ff; color: #2c5aa0;">
                         <h6>Understanding the Results:</h6>
                         <p class="mb-0">Each scenario shows how different <strong>expected return rates</strong> affect your monthly savings requirement. Higher returns mean you can save less monthly because compound growth does more of the work.</p>
                     </div>
@@ -112,7 +112,8 @@
                         {% for scenario in scenarios %}
                         <div class="col-md-6 mb-4">
                             <div class="card h-100">
-                                <div class="card-header {% if scenario.name == 'Moderate' %}bg-primary text-white{% elif scenario.name == 'Conservative' %}bg-warning text-dark{% elif scenario.name == 'Aggressive' %}bg-danger text-white{% else %}bg-info text-white{% endif %}">
+                                <div class="card-header {% if scenario.name == 'Moderate' %}text-white{% elif scenario.name == 'Conservative' %}text-dark{% elif scenario.name == 'Aggressive' %}text-white{% else %}text-white{% endif %}" 
+                                     style="{% if scenario.name == 'Moderate' %}background-color: #7fb3d3; border-color: #5a9bc4;{% elif scenario.name == 'Conservative' %}background-color: #f8e6b3; border-color: #f0d080;{% elif scenario.name == 'Aggressive' %}background-color: #d4a5a5; border-color: #c49595;{% else %}background-color: #a8d5ba; border-color: #8bc5a3;{% endif %}">
                                     <h5 class="mb-0">{{ scenario.name }} Scenario</h5>
                                 </div>
                                 <div class="card-body">
@@ -138,15 +139,15 @@
                                     <hr>
                                     
                                     <div class="text-center">
-                                        <h4 class="text-primary mb-1">${{ "{:,.0f}".format(scenario.monthly_contribution_needed) }}</h4>
+                                        <h4 class="mb-1" style="color: #4a7c59;">${{ "{:,.0f}".format(scenario.monthly_contribution_needed) }}</h4>
                                         <small class="text-muted">Monthly Savings Needed</small>
                                     </div>
                                     
                                     <div class="mt-3">
                                         <div class="progress">
                                             {% set progress = (scenario.monthly_contribution_needed / 3000) * 100 %}
-                                            <div class="progress-bar {% if progress > 80 %}bg-danger{% elif progress > 60 %}bg-warning{% else %}bg-success{% endif %}" 
-                                                 style="width: {{ progress }}%">
+                                            <div class="progress-bar" 
+                                                 style="{% if progress > 80 %}background-color: #d4a5a5;{% elif progress > 60 %}background-color: #f8e6b3;{% else %}background-color: #a8d5ba;{% endif %}; width: {{ progress }}%">
                                                 {{ "%.0f"|format(progress) }}%
                                             </div>
                                         </div>
@@ -170,7 +171,7 @@
                                 </ul>
                             </div>
                             <div class="col-md-6">
-                                <div class="alert alert-info">
+                                <div class="alert" style="background-color: #f0f8ff; border-color: #b3d9ff; color: #2c5aa0;">
                                     <h6>Industry Recommendations:</h6>
                                     <ul class="mb-0 small">
                                         <li>Save 15-20% of income for retirement</li>

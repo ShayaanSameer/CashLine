@@ -131,6 +131,6 @@ class RetirementProfileForm(FlaskForm):
 class RetirementCalculatorForm(FlaskForm):
     target_amount = FloatField('Target Retirement Amount', validators=[DataRequired(), NumberRange(min=0)])
     current_savings = FloatField('Current Savings', validators=[DataRequired(), NumberRange(min=0)])
-    years_to_retirement = IntegerField('Years to Retirement', validators=[DataRequired(), NumberRange(min=1, max=50)])
+    years_to_retirement = IntegerField('Years to Retirement', validators=[DataRequired(), NumberRange(min=1, max=100)])
     expected_return = FloatField('Expected Annual Return (%)', validators=[DataRequired(), NumberRange(min=0, max=20)])
     submit = SubmitField('Calculate Scenarios') 
