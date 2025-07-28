@@ -3,4 +3,383 @@ h1 { color: #333; }
 nav { margin-top: 2em; }
 table { background: #fff; border-collapse: collapse; }
 th, td { padding: 0.5em 1em; }
-th { background: #eee; } 
+th { background: #eee; }
+
+/* Pastel Color Scheme - More Vibrant for Better Visibility */
+:root {
+    --pastel-primary: #7fb069;      /* Vibrant mint green */
+    --pastel-secondary: #6b9bd4;    /* Vibrant sky blue */
+    --pastel-success: #5cb85c;      /* Vibrant green */
+    --pastel-warning: #f0ad4e;      /* Vibrant orange */
+    --pastel-danger: #d9534f;       /* Vibrant red */
+    --pastel-info: #5bc0de;         /* Vibrant cyan */
+    --pastel-light: #f8f9fa;        /* Soft light gray */
+    --pastel-dark: #6c757d;         /* Soft dark gray */
+    --pastel-purple: #9b59b6;       /* Vibrant purple */
+    --pastel-orange: #ff8c42;       /* Vibrant orange */
+    --pastel-pink: #e91e63;         /* Vibrant pink */
+    --pastel-teal: #20c997;         /* Vibrant teal */
+}
+
+/* Override Bootstrap colors with vibrant pastel versions */
+.btn-primary {
+    background-color: var(--pastel-primary) !important;
+    border-color: var(--pastel-primary) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: #6a9f5a !important;
+    border-color: #6a9f5a !important;
+    color: white !important;
+}
+
+.btn-secondary {
+    background-color: var(--pastel-secondary) !important;
+    border-color: var(--pastel-secondary) !important;
+    color: white !important;
+}
+
+.btn-secondary:hover {
+    background-color: #5a8bc4 !important;
+    border-color: #5a8bc4 !important;
+    color: white !important;
+}
+
+.btn-success {
+    background-color: var(--pastel-success) !important;
+    border-color: var(--pastel-success) !important;
+    color: white !important;
+}
+
+.btn-success:hover {
+    background-color: #4cae4c !important;
+    border-color: #4cae4c !important;
+    color: white !important;
+}
+
+.btn-warning {
+    background-color: var(--pastel-warning) !important;
+    border-color: var(--pastel-warning) !important;
+    color: white !important;
+}
+
+.btn-warning:hover {
+    background-color: #ec971f !important;
+    border-color: #ec971f !important;
+    color: white !important;
+}
+
+.btn-danger {
+    background-color: var(--pastel-danger) !important;
+    border-color: var(--pastel-danger) !important;
+    color: white !important;
+}
+
+.btn-danger:hover {
+    background-color: #c9302c !important;
+    border-color: #c9302c !important;
+    color: white !important;
+}
+
+.btn-info {
+    background-color: var(--pastel-info) !important;
+    border-color: var(--pastel-info) !important;
+    color: white !important;
+}
+
+.btn-info:hover {
+    background-color: #46b8da !important;
+    border-color: #46b8da !important;
+    color: white !important;
+}
+
+/* Outline button variants with better contrast */
+.btn-outline-primary {
+    color: var(--pastel-primary) !important;
+    border-color: var(--pastel-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--pastel-primary) !important;
+    color: white !important;
+}
+
+.btn-outline-secondary {
+    color: var(--pastel-secondary) !important;
+    border-color: var(--pastel-secondary) !important;
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--pastel-secondary) !important;
+    color: white !important;
+}
+
+.btn-outline-success {
+    color: var(--pastel-success) !important;
+    border-color: var(--pastel-success) !important;
+}
+
+.btn-outline-success:hover {
+    background-color: var(--pastel-success) !important;
+    color: white !important;
+}
+
+.btn-outline-warning {
+    color: var(--pastel-warning) !important;
+    border-color: var(--pastel-warning) !important;
+}
+
+.btn-outline-warning:hover {
+    background-color: var(--pastel-warning) !important;
+    color: white !important;
+}
+
+.btn-outline-info {
+    color: var(--pastel-info) !important;
+    border-color: var(--pastel-info) !important;
+}
+
+.btn-outline-info:hover {
+    background-color: var(--pastel-info) !important;
+    color: white !important;
+}
+
+/* Alert colors */
+.alert-primary {
+    background-color: var(--pastel-primary) !important;
+    border-color: #95c4a8 !important;
+    color: #2c5530 !important;
+}
+
+.alert-secondary {
+    background-color: var(--pastel-secondary) !important;
+    border-color: #a5c7e8 !important;
+    color: #2c5aa0 !important;
+}
+
+.alert-success {
+    background-color: var(--pastel-success) !important;
+    border-color: #b8d9b9 !important;
+    color: #2e7d32 !important;
+}
+
+.alert-warning {
+    background-color: var(--pastel-warning) !important;
+    border-color: #ffeaa7 !important;
+    color: #856404 !important;
+}
+
+.alert-danger {
+    background-color: var(--pastel-danger) !important;
+    border-color: #f1c0c7 !important;
+    color: #721c24 !important;
+}
+
+.alert-info {
+    background-color: var(--pastel-info) !important;
+    border-color: #bee5eb !important;
+    color: #0c5460 !important;
+}
+
+/* Badge colors */
+.badge-primary {
+    background-color: var(--pastel-primary) !important;
+    color: #2c5530 !important;
+}
+
+.badge-secondary {
+    background-color: var(--pastel-secondary) !important;
+    color: #2c5aa0 !important;
+}
+
+.badge-success {
+    background-color: var(--pastel-success) !important;
+    color: #2e7d32 !important;
+}
+
+.badge-warning {
+    background-color: var(--pastel-warning) !important;
+    color: #856404 !important;
+}
+
+.badge-danger {
+    background-color: var(--pastel-danger) !important;
+    color: #721c24 !important;
+}
+
+.badge-info {
+    background-color: var(--pastel-info) !important;
+    color: #0c5460 !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--pastel-secondary) !important;
+    color: #2c5aa0 !important;
+}
+
+/* Text colors */
+.text-primary {
+    color: #2c5530 !important;
+}
+
+.text-secondary {
+    color: #2c5aa0 !important;
+}
+
+.text-success {
+    color: #2e7d32 !important;
+}
+
+.text-warning {
+    color: #856404 !important;
+}
+
+.text-danger {
+    color: #721c24 !important;
+}
+
+.text-info {
+    color: #0c5460 !important;
+}
+
+/* Card styling */
+.card {
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.card-header {
+    background-color: var(--pastel-light);
+    border-bottom-color: #e9ecef;
+}
+
+/* Icon alignment fixes */
+.btn i,
+.btn .material-icons-round,
+.btn .material-icons {
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+.btn span {
+    vertical-align: middle;
+}
+
+/* Fix for buttons with icons and text */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Fix for navigation and other icon-text combinations */
+.nav-link i,
+.nav-link .material-icons-round,
+.nav-link .material-icons,
+.navbar-nav .nav-link i,
+.navbar-nav .nav-link .material-icons-round,
+.navbar-nav .nav-link .material-icons {
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+/* Fix for any other icon-text combinations */
+i + span,
+.material-icons-round + span,
+.material-icons + span,
+span + i,
+span + .material-icons-round,
+span + .material-icons {
+    vertical-align: middle;
+}
+
+/* Ensure proper alignment for flex containers with icons */
+.d-flex i,
+.d-flex .material-icons-round,
+.d-flex .material-icons {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Fix for card headers and other content with icons */
+.card-header i,
+.card-header .material-icons-round,
+.card-header .material-icons,
+.card-body i,
+.card-body .material-icons-round,
+.card-body .material-icons {
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+/* Fix for list items with icons */
+.list-group-item i,
+.list-group-item .material-icons-round,
+.list-group-item .material-icons {
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+/* Fix for badges and small elements with icons */
+.badge i,
+.badge .material-icons-round,
+.badge .material-icons {
+    vertical-align: middle;
+    margin-right: 0.125rem;
+}
+
+/* Fix for alerts and other components with icons */
+.alert i,
+.alert .material-icons-round,
+.alert .material-icons {
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+/* General fix for any icon-text combination */
+.icon-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Specific fix for sidebar items */
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.sidebar-item i.material-icons-round,
+.sidebar-item i.material-icons-outlined {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0;
+}
+
+.sidebar-item span {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Fix for user info section */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-info i {
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Fix for any remaining icon alignment issues */
+.material-icons-round,
+.material-icons-outlined,
+.material-icons {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+} 

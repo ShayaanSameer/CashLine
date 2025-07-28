@@ -92,14 +92,56 @@
     </div>
     {# Show welcome message for new users #}
     {% if not data.categories or data.categories|length == 0 %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <h5 class="alert-heading">🎯 Get Started with AI-Powered Budgeting!</h5>
-            <p class="mb-0">New to budgeting? Let our AI help you create a personalized budget based on your income, expenses, and financial goals.</p>
-            <hr>
-            <a href="{{ url_for('onboarding') }}" class="btn btn-primary btn-sm">Start Onboarding</a>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="card border-0 shadow-sm mb-4" style="background: #f8f9fa; border-left: 4px solid var(--pastel-primary) !important;">
+            <div class="card-body p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="me-3" style="width: 48px; height: 48px; background-color: var(--pastel-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i class="material-icons-round text-white" style="font-size: 1.5rem;">auto_awesome</i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-bold" style="color: #232946;">Get Started with AI-Powered Budgeting</h5>
+                                <p class="mb-0 text-muted">New to budgeting? Let our AI help you create a personalized budget based on your income, expenses, and financial goals.</p>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('onboarding') }}" class="btn btn-primary">
+                            <i class="material-icons-round me-2">rocket_launch</i>
+                            Start Onboarding
+                        </a>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="position: absolute; top: 1rem; right: 1rem;"></button>
+                    </div>
+                </div>
+            </div>
         </div>
     {% endif %}
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card dashboard-card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fa-solid fa-chart-line text-primary me-2"></i> Monthly Spending Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="spendingTrendChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card dashboard-card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fa-solid fa-chart-pie text-warning me-2"></i> Category Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row g-4 mb-4">
         <div class="col-md-6 col-lg-6">
             <div class="card dashboard-card shadow-sm h-100">
@@ -125,7 +167,7 @@
                     {% else %}
                         <div class="text-muted">No investments</div>
                     {% endif %}
-                    <a href="/investments" class="btn btn-link btn-sm mt-2">View all investments</a>
+                    <a href="{{ url_for('current_holdings') }}" class="btn btn-link btn-sm mt-2">View all investments</a>
                 </div>
             </div>
         </div>
@@ -242,12 +284,12 @@
             <input type="number" name="target_amount" step="0.01" class="form-control" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Current Saved</label>
-            <input type="number" name="saved_amount" step="0.01" class="form-control" value="0">
+            <label class="form-label">Current Amount</label>
+            <input type="number" name="current_amount" step="0.01" class="form-control" value="0" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Deadline</label>
-            <input type="date" name="deadline" class="form-control">
+            <label class="form-label">Target Date</label>
+            <input type="date" name="target_date" class="form-control" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -258,4 +300,106 @@
     </div>
   </div>
 </div>
+
+<script>
+// Spending Trend Chart
+const spendingCtx = document.getElementById('spendingTrendChart').getContext('2d');
+const spendingChart = new Chart(spendingCtx, {
+    type: 'line',
+    data: {
+        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        datasets: [{
+            label: 'Spending',
+            data: [
+                {{ (data.weekly_spending[0] * session.currency_rate)|round(2) }},
+                {{ (data.weekly_spending[1] * session.currency_rate)|round(2) }},
+                {{ (data.weekly_spending[2] * session.currency_rate)|round(2) }},
+                {{ (data.weekly_spending[3] * session.currency_rate)|round(2) }}
+            ],
+            borderColor: '#7fb069',
+            backgroundColor: 'rgba(127, 176, 105, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'Budget',
+            data: [
+                {{ (data.chart_budget * 0.25 * session.currency_rate)|round(2) }},
+                {{ (data.chart_budget * 0.5 * session.currency_rate)|round(2) }},
+                {{ (data.chart_budget * 0.75 * session.currency_rate)|round(2) }},
+                {{ (data.chart_budget * session.currency_rate)|round(2) }}
+            ],
+            borderColor: '#f4a261',
+            backgroundColor: 'rgba(244, 162, 97, 0.1)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '{{ get_currency_symbol(session.currency) }}' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Category Breakdown Chart
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+const categoryChart = new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for cat in data.categories %}
+                '{{ cat.name }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for cat in data.categories %}
+                    {{ (cat.spent * session.currency_rate)|round(2) }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#7fb069',
+                '#f4a261',
+                '#e76f51',
+                '#264653',
+                '#2a9d8f',
+                '#e9c46a',
+                '#f4a261',
+                '#e76f51'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+</script>
 {% endblock %} 

@@ -3,71 +3,136 @@
 {% block title %}Register - Budget Tracker{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white text-center">
-                    <h4 class="mb-0">Create Account</h4>
+<div class="container-fluid">
+    <div class="row justify-content-center align-items-center min-vh-100" style="background: #fafbfc;">
+        <div class="col-md-5 col-lg-4">
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                <div class="card-header bg-white border-0 text-center py-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 60px; height: 60px;">
+                        <i class="material-icons-round text-primary" style="font-size: 1.8rem;">person_add</i>
+                    </div>
+                    <h4 class="mb-1 fw-bold" style="color: #232946;">Join Us</h4>
+                    <p class="text-muted mb-0 small">Create your account to get started</p>
                 </div>
-                <div class="card-body">
+                
+                <div class="card-body p-4">
+                    <!-- Error Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    <i class="material-icons-round me-2" style="font-size: 1rem;">
+                                        {% if category == 'error' %}error{% elif category == 'success' %}check_circle{% else %}info{% endif %}
+                                    </i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
                     <form method="POST" action="{{ url_for('register') }}">
                         {{ form.hidden_tag() }}
+                        
+                        <!-- Username Field -->
                         <div class="mb-3">
-                            {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control", placeholder="Choose a username") }}
+                            <label class="form-label fw-semibold text-muted mb-2">
+                                <i class="material-icons-round me-2" style="font-size: 1rem; vertical-align: middle;">person</i>
+                                Username
+                            </label>
+                            {{ form.username(class="form-control", placeholder="Choose a username", style="border-radius: 8px; border: 1px solid #e6edfa;") }}
                             {% if form.username.errors %}
-                                <div class="text-danger">
+                                <div class="text-danger mt-2 small">
                                     {% for error in form.username.errors %}
-                                        <small>{{ error }}</small>
+                                        <i class="material-icons-round me-1" style="font-size: 0.8rem;">error</i>{{ error }}
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
+
+                        <!-- Email Field -->
                         <div class="mb-3">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control", placeholder="Enter your email") }}
+                            <label class="form-label fw-semibold text-muted mb-2">
+                                <i class="material-icons-round me-2" style="font-size: 1rem; vertical-align: middle;">email</i>
+                                Email
+                            </label>
+                            {{ form.email(class="form-control", placeholder="Enter your email", style="border-radius: 8px; border: 1px solid #e6edfa;") }}
                             {% if form.email.errors %}
-                                <div class="text-danger">
+                                <div class="text-danger mt-2 small">
                                     {% for error in form.email.errors %}
-                                        <small>{{ error }}</small>
+                                        <i class="material-icons-round me-1" style="font-size: 0.8rem;">error</i>{{ error }}
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
+
+                        <!-- Password Field -->
                         <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control", placeholder="Create a password") }}
+                            <label class="form-label fw-semibold text-muted mb-2">
+                                <i class="material-icons-round me-2" style="font-size: 1rem; vertical-align: middle;">lock</i>
+                                Password
+                            </label>
+                            {{ form.password(class="form-control", placeholder="Create a password", style="border-radius: 8px; border: 1px solid #e6edfa;") }}
                             {% if form.password.errors %}
-                                <div class="text-danger">
+                                <div class="text-danger mt-2 small">
                                     {% for error in form.password.errors %}
-                                        <small>{{ error }}</small>
+                                        <i class="material-icons-round me-1" style="font-size: 0.8rem;">error</i>{{ error }}
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="mb-3">
-                            {{ form.confirm_password.label(class="form-label") }}
-                            {{ form.confirm_password(class="form-control", placeholder="Confirm your password") }}
+
+                        <!-- Confirm Password Field -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold text-muted mb-2">
+                                <i class="material-icons-round me-2" style="font-size: 1rem; vertical-align: middle;">lock</i>
+                                Confirm Password
+                            </label>
+                            {{ form.confirm_password(class="form-control", placeholder="Confirm your password", style="border-radius: 8px; border: 1px solid #e6edfa;") }}
                             {% if form.confirm_password.errors %}
-                                <div class="text-danger">
+                                <div class="text-danger mt-2 small">
                                     {% for error in form.confirm_password.errors %}
-                                        <small>{{ error }}</small>
+                                        <i class="material-icons-round me-1" style="font-size: 0.8rem;">error</i>{{ error }}
                                     {% endfor %}
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="d-grid">
-                            {{ form.submit(class="btn btn-success") }}
+
+                        <!-- Register Button -->
+                        <div class="d-grid mb-3">
+                            {{ form.submit(class="btn btn-primary fw-semibold py-2", style="border-radius: 8px;") }}
                         </div>
                     </form>
-                    <hr>
+
+                    <!-- Login Link -->
                     <div class="text-center">
-                        <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}" class="text-decoration-none">Login here</a></p>
+                        <p class="text-muted mb-0 small">
+                            Already have an account? 
+                            <a href="{{ url_for('login') }}" class="text-decoration-none fw-semibold" style="color: var(--pastel-primary);">
+                                Sign in here
+                            </a>
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.form-control:focus {
+    border-color: var(--pastel-primary);
+    box-shadow: 0 0 0 0.2rem rgba(127, 176, 105, 0.25);
+}
+
+.card {
+    border: 1px solid #e6edfa;
+}
+
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.5rem !important;
+    }
+}
+</style>
 {% endblock %} 

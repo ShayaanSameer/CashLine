@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Retirement Calculator{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-4">Retirement Scenario Calculator</h1>
+                <p class="lead">Compare different retirement strategies and see what works best for you</p>
+            </div>
+
+            <!-- Form -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Your Information</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.target_amount.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.target_amount(class="form-control", placeholder="e.g., 1000000") }}
+                                    </div>
+                                    {% if form.target_amount.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.target_amount.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.current_savings.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.current_savings(class="form-control", placeholder="e.g., 50000") }}
+                                    </div>
+                                    {% if form.current_savings.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.current_savings.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.years_to_retirement.label(class="form-label") }}
+                                    {{ form.years_to_retirement(class="form-control", placeholder="e.g., 30") }}
+                                    {% if form.years_to_retirement.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.years_to_retirement.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.expected_return.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.expected_return(class="form-control", placeholder="e.g., 6.5") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.expected_return.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.expected_return.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('retirement_plans') }}" class="btn btn-secondary">Back to Plans</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results -->
+            {% if scenarios %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Retirement Scenarios Comparison</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>Understanding the Results:</h6>
+                        <p class="mb-0">Each scenario shows how different <strong>expected return rates</strong> affect your monthly savings requirement. Higher returns mean you can save less monthly because compound growth does more of the work.</p>
+                    </div>
+                    
+                    <div class="row">
+                        {% for scenario in scenarios %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header {% if scenario.name == 'Moderate' %}bg-primary text-white{% elif scenario.name == 'Conservative' %}bg-warning text-dark{% elif scenario.name == 'Aggressive' %}bg-danger text-white{% else %}bg-info text-white{% endif %}">
+                                    <h5 class="mb-0">{{ scenario.name }} Scenario</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small">{{ scenario.description }}</p>
+                                    
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <p class="mb-1"><strong>Retirement Age:</strong></p>
+                                            <p class="mb-1"><strong>Years to Save:</strong></p>
+                                            <p class="mb-1"><strong>Target Amount:</strong></p>
+                                            <p class="mb-1"><strong>Monthly Income:</strong></p>
+                                            <p class="mb-1"><strong>Expected Return:</strong></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="mb-1">{{ scenario.retirement_age }}</p>
+                                            <p class="mb-1">{{ scenario.years_to_retirement }}</p>
+                                            <p class="mb-1">${{ "{:,.0f}".format(scenario.target_amount) }}</p>
+                                            <p class="mb-1">${{ "{:,.0f}".format(scenario.retirement_income) }}</p>
+                                            <p class="mb-1">{{ "%.1f"|format(scenario.expected_return) }}%</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <div class="text-center">
+                                        <h4 class="text-primary mb-1">${{ "{:,.0f}".format(scenario.monthly_contribution_needed) }}</h4>
+                                        <small class="text-muted">Monthly Savings Needed</small>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <div class="progress">
+                                            {% set progress = (scenario.monthly_contribution_needed / 3000) * 100 %}
+                                            <div class="progress-bar {% if progress > 80 %}bg-danger{% elif progress > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                                 style="width: {{ progress }}%">
+                                                {{ "%.0f"|format(progress) }}%
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">Relative to $3,000/month maximum</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>Key Insights</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><strong>Conservative:</strong> Lower risk, higher monthly savings needed</li>
+                                    <li><strong>Moderate:</strong> Balanced approach, industry standard</li>
+                                    <li><strong>Aggressive:</strong> Higher risk, potentially lower monthly savings</li>
+                                    <li><strong>Early Retirement:</strong> Retire sooner with reduced lifestyle</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6>Industry Recommendations:</h6>
+                                    <ul class="mb-0 small">
+                                        <li>Save 15-20% of income for retirement</li>
+                                        <li>Use 4% withdrawal rule for sustainability</li>
+                                        <li>Consider inflation in long-term planning</li>
+                                        <li>Review and adjust plan annually</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- How Scenarios Work -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">How Scenarios Work</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6>Important: Expected Returns Are Assumptions</h6>
+                        <p class="mb-0">The return rates shown are <strong>historical averages and assumptions</strong>, not guarantees. Actual market performance may differ significantly from these projections.</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Conservative Scenario</h6>
+                            <p class="small">Retire at 65 with 5% returns, 80% income replacement. Lower risk but requires more savings.</p>
+                            
+                            <h6>Moderate Scenario</h6>
+                            <p class="small">Retire at 65 with 6.5% returns, 80% income replacement. Industry standard approach.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Aggressive Scenario</h6>
+                            <p class="small">Retire at 65 with 8% returns, 80% income replacement. Higher risk, potentially lower monthly savings.</p>
+                            
+                            <h6>Early Retirement</h6>
+                            <p class="small">Retire at 60 with 6.5% returns, 70% income replacement. Retire sooner with reduced lifestyle.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Why Return Rates Matter:</h6>
+                        <ul class="small">
+                            <li><strong>Compound Growth:</strong> Higher returns mean your money grows faster over time</li>
+                            <li><strong>Monthly Savings Impact:</strong> Higher returns = lower monthly savings needed</li>
+                            <li><strong>Risk vs. Reward:</strong> Higher expected returns usually mean higher investment risk</li>
+                            <li><strong>Historical Context:</strong> Based on long-term market performance data</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

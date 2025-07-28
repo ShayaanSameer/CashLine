@@ -13,6 +13,23 @@
                 </div>
                 <div class="card-body">
                     {% if goals %}
+                        <!-- Goals Progress Visualization -->
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-3">Overall Progress</h6>
+                            {% set total_target = goals|sum(attribute='target_amount') %}
+                            {% set total_current = goals|sum(attribute='current_amount') %}
+                            {% set overall_progress = (total_current / total_target * 100) if total_target > 0 else 0 %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>Total Saved</span>
+                                <span class="fw-bold">${{ "%.2f"|format(total_current) }} / ${{ "%.2f"|format(total_target) }}</span>
+                            </div>
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ overall_progress }}%" aria-valuenow="{{ overall_progress }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ "%.1f"|format(overall_progress) }}%
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             {% for goal in goals %}
                                 <div class="col-md-6 mb-3">
@@ -22,7 +39,7 @@
                                             <p class="card-text">
                                                 <strong>Target:</strong> ${{ "%.2f"|format(goal.target_amount) }}<br>
                                                 <strong>Current:</strong> ${{ "%.2f"|format(goal.current_amount) }}<br>
-                                                <strong>Deadline:</strong> {{ goal.target_date.strftime('%Y-%m-%d') }}
+                                                <strong>Deadline:</strong> {{ goal.target_date.strftime('%Y-%m-%d') if goal.target_date else 'No deadline' }}
                                             </p>
                                             {% set progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
                                             <div class="progress mb-2">
@@ -78,6 +95,36 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Goals Progress Chart -->
+            {% if goals %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="material-icons-round text-primary me-2">trending_up</i> Progress Overview</h6>
+                </div>
+                <div class="card-body">
+                    {% for goal in goals %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">{{ goal.name }}</span>
+                            <span class="text-muted">{{ "%.1f"|format((goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0) }}%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            {% set goal_progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
+                            <div class="progress-bar" role="progressbar" style="width: {{ goal_progress }}%; background-color: 
+                                {% if loop.index0 == 0 %}#7fb069
+                                {% elif loop.index0 == 1 %}#f4a261
+                                {% elif loop.index0 == 2 %}#e76f51
+                                {% elif loop.index0 == 3 %}#264653
+                                {% elif loop.index0 == 4 %}#2a9d8f
+                                {% else %}#6c757d{% endif %};"></div>
+                        </div>
+                        <small class="text-muted">${{ "%.2f"|format(goal.current_amount) }} / ${{ "%.2f"|format(goal.target_amount) }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

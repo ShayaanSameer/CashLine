@@ -17,12 +17,51 @@ class User(UserMixin, db.Model):
     expenses = db.relationship('Expense', backref='user', lazy=True, cascade='all, delete-orphan')
     investments = db.relationship('Investment', backref='user', lazy=True, cascade='all, delete-orphan')
     goals = db.relationship('Goal', backref='user', lazy=True, cascade='all, delete-orphan')
+    profile = db.relationship('UserProfile', backref='user', uselist=False, cascade='all, delete-orphan')
+    retirement_plans = db.relationship('RetirementPlan', backref='user', lazy=True, cascade='all, delete-orphan')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+class UserProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    age = db.Column(db.Integer, nullable=True)
+    retirement_age = db.Column(db.Integer, nullable=True)
+    current_salary = db.Column(db.Float, nullable=True)
+    expected_retirement_income = db.Column(db.Float, nullable=True)
+    current_savings = db.Column(db.Float, nullable=True)
+    monthly_contribution = db.Column(db.Float, nullable=True)
+    risk_tolerance = db.Column(db.String(20), nullable=True)  # Conservative, Moderate, Aggressive
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Asset(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    symbol = db.Column(db.String(10), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    asset_type = db.Column(db.String(20), nullable=False)  # Stock, Bond, ETF, Mutual Fund, etc.
+    expected_return = db.Column(db.Float, nullable=False)
+    weight = db.Column(db.Float, nullable=False)  # Percentage allocation (0-100)
+    risk_level = db.Column(db.String(20), nullable=False)  # Low, Medium, High
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class RetirementPlan(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    target_amount = db.Column(db.Float, nullable=False)
+    years_to_retirement = db.Column(db.Integer, nullable=False)
+    expected_return_rate = db.Column(db.Float, nullable=False)
+    monthly_contribution_needed = db.Column(db.Float, nullable=False)
+    projected_amount = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class Budget(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -48,7 +87,7 @@ class Investment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     symbol = db.Column(db.String(10), nullable=False)
-    shares = db.Column(db.Integer, nullable=False)
+    shares = db.Column(db.Float, nullable=False)
     purchase_price = db.Column(db.Float, nullable=False)
     purchase_date = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2 mb-3">Portfolio Overview</h1>
+            <p class="text-muted">Track your investments and plan for retirement in one unified view</p>
+        </div>
+    </div>
+
+    <!-- Portfolio Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Current Holdings</h6>
+                    <h3 class="mb-0">{{ current_investments|length }}</h3>
+                    <small class="text-success">Active investments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Purchase Value</h6>
+                    <h3 class="mb-0">${{ "%.2f"|format(total_purchase_value) }}</h3>
+                    <small class="text-info">Amount invested</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Current Portfolio Value</h6>
+                    <h3 class="mb-0">${{ "%.2f"|format(total_current_value) }}</h3>
+                    <small class="text-primary">Real-time value</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title text-muted">Total Gain/Loss</h6>
+                    <h3 class="mb-0 {% if total_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ "+" if total_gain_loss >= 0 else "" }}${{ "%.2f"|format(total_gain_loss) }}
+                    </h3>
+                    <small class="{% if total_gain_loss_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ "+" if total_gain_loss_percent >= 0 else "" }}{{ "%.1f"|format(total_gain_loss_percent) }}%
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Portfolio Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="portfolioPerformanceChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Asset Allocation</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="assetAllocationChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('current_holdings') }}" class="btn btn-outline-primary w-100">
+                                <i class="material-icons-round">add</i> Add Investment
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('asset_allocation') }}" class="btn btn-outline-success w-100">
+                                <i class="material-icons-round">pie_chart</i> Asset Allocation
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('retirement_planning') }}" class="btn btn-outline-warning w-100">
+                                <i class="material-icons-round">schedule</i> Retirement Planning
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('automated_retirement_onboarding') }}" class="btn btn-outline-info w-100">
+                                <i class="material-icons-round">auto_awesome</i> Smart Planning
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Current Holdings Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Current Holdings</h5>
+                    <a href="{{ url_for('current_holdings') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if current_investments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Shares</th>
+                                        <th>Purchase Price</th>
+                                        <th>Current Price</th>
+                                        <th>Total Value</th>
+                                        <th>Gain/Loss</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for investment in current_investments[:5] %}
+                                    <tr>
+                                        <td><strong>{{ investment.symbol }}</strong></td>
+                                        <td>{{ investment.shares }}</td>
+                                        <td>${{ "%.2f"|format(investment.purchase_price) }}</td>
+                                        <td>
+                                            {% if investment.symbol in investment_prices %}
+                                                ${{ "%.2f"|format(investment_prices[investment.symbol].current_price) }}
+                                            {% else %}
+                                                ${{ "%.2f"|format(investment.purchase_price) }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if investment.symbol in investment_prices %}
+                                                ${{ "%.2f"|format(investment.shares * investment_prices[investment.symbol].current_price) }}
+                                            {% else %}
+                                                ${{ "%.2f"|format(investment.shares * investment.purchase_price) }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if investment.symbol in investment_prices %}
+                                                {% set current_value = investment.shares * investment_prices[investment.symbol].current_price %}
+                                                {% set purchase_value = investment.shares * investment.purchase_price %}
+                                                {% set gain_loss = current_value - purchase_value %}
+                                                {% set gain_loss_pct = (gain_loss / purchase_value) * 100 %}
+                                                <span class="{% if gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                    {{ "+" if gain_loss >= 0 else "" }}${{ "%.2f"|format(gain_loss) }}
+                                                    ({{ "+" if gain_loss_pct >= 0 else "" }}{{ "%.1f"|format(gain_loss_pct) }}%)
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">N/A</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('edit_holding', investment_id=investment.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="material-icons-round text-muted" style="font-size: 3rem;">trending_up</i>
+                            <p class="text-muted mt-2">No investments yet</p>
+                            <a href="{{ url_for('add_holding') }}" class="btn btn-primary">Add Your First Investment</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retirement Planning Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Retirement Profile</h5>
+                    <a href="{{ url_for('retirement_profile') }}" class="btn btn-sm btn-outline-warning">Update</a>
+                </div>
+                <div class="card-body">
+                    {% if profile %}
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Current Age</small>
+                                <p class="mb-2"><strong>{{ profile.age }}</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Retirement Age</small>
+                                <p class="mb-2"><strong>{{ profile.retirement_age }}</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Current Income</small>
+                                <p class="mb-2"><strong>${{ "{:,.0f}".format(profile.current_salary) }}</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Target Income</small>
+                                <p class="mb-2"><strong>${{ "{:,.0f}".format(profile.expected_retirement_income) }}</strong></p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No retirement profile set up</p>
+                            <a href="{{ url_for('retirement_profile') }}" class="btn btn-warning">Set Up Profile</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Retirement Plans</h5>
+                    <a href="{{ url_for('retirement_plans') }}" class="btn btn-sm btn-outline-warning">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if retirement_plans %}
+                        {% for plan in retirement_plans[:3] %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ plan.name }}</strong>
+                                <br>
+                                <small class="text-muted">Target: ${{ "{:,.0f}".format(plan.target_amount) }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">Monthly</small>
+                                <br>
+                                <strong>${{ "{:,.0f}".format(plan.monthly_contribution_needed) }}</strong>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No retirement plans yet</p>
+                            <a href="{{ url_for('automated_retirement_onboarding') }}" class="btn btn-warning">Create Smart Plan</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Allocation Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Asset Allocation</h5>
+                    <a href="{{ url_for('asset_allocation') }}" class="btn btn-sm btn-success">Manage</a>
+                </div>
+                <div class="card-body">
+                    {% if retirement_assets %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Asset</th>
+                                        <th>Type</th>
+                                        <th>Weight</th>
+                                        <th>Expected Return</th>
+                                        <th>Risk Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for asset in retirement_assets[:5] %}
+                                    <tr>
+                                        <td><strong>{{ asset.symbol }}</strong></td>
+                                        <td>{{ asset.asset_type }}</td>
+                                        <td>{{ "%.1f"|format(asset.weight) }}%</td>
+                                        <td>{{ "%.1f"|format(asset.expected_return) }}%</td>
+                                        <td>
+                                            <span class="badge bg-{% if asset.risk_level == 'Low' %}success{% elif asset.risk_level == 'Medium' %}warning{% else %}danger{% endif %}">
+                                                {{ asset.risk_level }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="material-icons-round text-muted" style="font-size: 3rem;">pie_chart</i>
+                            <p class="text-muted mt-2">No asset allocation set up</p>
+                            <a href="{{ url_for('add_asset') }}" class="btn btn-success">Add Assets</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Portfolio Performance Chart
+const portfolioCtx = document.getElementById('portfolioPerformanceChart').getContext('2d');
+const portfolioChart = new Chart(portfolioCtx, {
+    type: 'line',
+    data: {
+        labels: ['Purchase Value', 'Current Value'],
+        datasets: [{
+            label: 'Portfolio Value ($)',
+            data: [{{ total_purchase_value }}, {{ total_current_value }}],
+            borderColor: '#7fb069',
+            backgroundColor: 'rgba(127, 176, 105, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Asset Allocation Chart
+const allocationCtx = document.getElementById('assetAllocationChart').getContext('2d');
+const allocationChart = new Chart(allocationCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for asset in retirement_assets %}
+                '{{ asset.symbol }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for asset in retirement_assets %}
+                    {{ asset.weight }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#7fb069',
+                '#f4a261',
+                '#e76f51',
+                '#264653',
+                '#2a9d8f',
+                '#e9c46a',
+                '#f4a261',
+                '#e76f51'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 20,
+                    usePointStyle: true
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 

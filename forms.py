@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, FloatField, DateField, TextAreaField, SelectField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, FloatField, DateField, TextAreaField, SelectField, IntegerField, HiddenField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange, Optional
 from models import User
 
 class LoginForm(FlaskForm):
@@ -24,6 +24,49 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user:
             raise ValidationError('Email already registered. Please use a different one.')
+
+class UserProfileForm(FlaskForm):
+    age = IntegerField('Age', validators=[DataRequired(), NumberRange(min=18, max=100)])
+    retirement_age = IntegerField('Retirement Age', validators=[DataRequired(), NumberRange(min=50, max=80)])
+    current_salary = FloatField('Current Annual Salary', validators=[DataRequired(), NumberRange(min=0)])
+    expected_retirement_income = FloatField('Expected Annual Retirement Income', validators=[DataRequired(), NumberRange(min=0)])
+    current_savings = FloatField('Current Retirement Savings', validators=[DataRequired(), NumberRange(min=0)])
+    monthly_contribution = FloatField('Monthly Contribution', validators=[DataRequired(), NumberRange(min=0)])
+    risk_tolerance = SelectField('Risk Tolerance', choices=[
+        ('Conservative', 'Conservative (Low Risk)'),
+        ('Moderate', 'Moderate (Medium Risk)'),
+        ('Aggressive', 'Aggressive (High Risk)')
+    ], validators=[DataRequired()])
+    submit = SubmitField('Save Profile')
+
+class AssetForm(FlaskForm):
+    symbol = StringField('Asset Symbol', validators=[DataRequired(), Length(max=10)])
+    name = StringField('Asset Name', validators=[DataRequired(), Length(max=100)])
+    asset_type = SelectField('Asset Type', choices=[
+        ('Stock', 'Stock'),
+        ('Bond', 'Bond'),
+        ('ETF', 'ETF'),
+        ('Mutual Fund', 'Mutual Fund'),
+        ('Real Estate', 'Real Estate'),
+        ('Commodity', 'Commodity'),
+        ('Other', 'Other')
+    ], validators=[DataRequired()])
+    expected_return = FloatField('Expected Annual Return (%)', validators=[DataRequired(), NumberRange(min=0, max=50)])
+    weight = FloatField('Portfolio Weight (%)', validators=[DataRequired(), NumberRange(min=0, max=100)])
+    risk_level = SelectField('Risk Level', choices=[
+        ('Low', 'Low'),
+        ('Medium', 'Medium'),
+        ('High', 'High')
+    ], validators=[DataRequired()])
+    submit = SubmitField('Add Asset')
+
+class RetirementPlanForm(FlaskForm):
+    name = StringField('Plan Name', validators=[DataRequired(), Length(max=100)])
+    target_amount = FloatField('Target Retirement Amount', validators=[DataRequired(), NumberRange(min=0)])
+    years_to_retirement = IntegerField('Years to Retirement', validators=[DataRequired(), NumberRange(min=1, max=50)])
+    expected_return_rate = FloatField('Expected Annual Return Rate (%)', validators=[DataRequired(), NumberRange(min=0, max=20)])
+    monthly_contribution = FloatField('Monthly Contribution', validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField('Add Plan')
 
 class BudgetForm(FlaskForm):
     category = StringField('Category', validators=[DataRequired()])
@@ -61,3 +104,33 @@ class GoalForm(FlaskForm):
     current_amount = FloatField('Current Amount', validators=[DataRequired()])
     target_date = DateField('Target Date', validators=[DataRequired()])
     submit = SubmitField('Add Goal') 
+
+class AutomatedRetirementForm(FlaskForm):
+    # Basic Info (User provides)
+    current_age = IntegerField('Your Age', validators=[DataRequired(), NumberRange(min=18, max=100)])
+    current_income = FloatField('Current Annual Income', validators=[DataRequired(), NumberRange(min=0)])
+    current_savings = FloatField('Current Retirement Savings', validators=[DataRequired(), NumberRange(min=0)])
+    
+    # Risk tolerance for auto-calculation
+    risk_tolerance = SelectField('Risk Tolerance', choices=[
+        ('Conservative', 'Conservative (Low Risk)'),
+        ('Moderate', 'Moderate (Medium Risk)'),
+        ('Aggressive', 'Aggressive (High Risk)')
+    ], validators=[DataRequired()])
+    
+    submit = SubmitField('Create Smart Plan')
+
+class RetirementProfileForm(FlaskForm):
+    current_age = IntegerField('Current Age', validators=[DataRequired(), NumberRange(min=18, max=100)])
+    retirement_age = IntegerField('Retirement Age', validators=[DataRequired(), NumberRange(min=50, max=80)])
+    current_income = FloatField('Current Annual Income', validators=[DataRequired(), NumberRange(min=0)])
+    expected_retirement_income = FloatField('Expected Annual Retirement Income', validators=[DataRequired(), NumberRange(min=0)])
+    current_savings = FloatField('Current Retirement Savings', validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField('Save Profile')
+
+class RetirementCalculatorForm(FlaskForm):
+    target_amount = FloatField('Target Retirement Amount', validators=[DataRequired(), NumberRange(min=0)])
+    current_savings = FloatField('Current Savings', validators=[DataRequired(), NumberRange(min=0)])
+    years_to_retirement = IntegerField('Years to Retirement', validators=[DataRequired(), NumberRange(min=1, max=50)])
+    expected_return = FloatField('Expected Annual Return (%)', validators=[DataRequired(), NumberRange(min=0, max=20)])
+    submit = SubmitField('Calculate Scenarios') 

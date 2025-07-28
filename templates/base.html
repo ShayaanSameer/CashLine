@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined|Material+Icons+Round" rel="stylesheet">
+    <!-- Chart.js for beautiful charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         html, body {
             height: 100vh;
@@ -180,8 +182,8 @@
             <a href="{{ url_for('expenses') }}" class="sidebar-item {% if request.path.startswith('/expenses') %}active{% endif %}">
                 <i class="material-icons-round">receipt_long</i> <span>Expenses</span>
             </a>
-            <a href="{{ url_for('investments') }}" class="sidebar-item {% if request.path.startswith('/investments') %}active{% endif %}">
-                <i class="material-icons-round">show_chart</i> <span>Investments</span>
+            <a href="{{ url_for('portfolio_overview') }}" class="sidebar-item {% if request.path.startswith('/portfolio') %}active{% endif %}">
+                <i class="material-icons-round">trending_up</i> <span>Portfolio</span>
             </a>
             <a href="{{ url_for('advice') }}" class="sidebar-item {% if request.path.startswith('/advice') %}active{% endif %}">
                 <i class="material-icons-round">lightbulb</i> <span>Advice</span>
