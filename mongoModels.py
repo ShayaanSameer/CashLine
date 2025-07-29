@@ -39,7 +39,7 @@ class UserProfile():
         self.created_at = created_at
         self.updated_at = updated_at
 
-    def get_id(self):
+    def getid(self):
         return str(self._id)
 
 class Asset():
@@ -55,7 +55,7 @@ class Asset():
         self.created_at = created_at
         self.updated = updated_at
 
-    def get_id(self):
+    def getid(self):
         return str(self._id)
 
 class RetirementPlan():
@@ -71,7 +71,7 @@ class RetirementPlan():
         self.created_at = c_at
         self.updated_at = u_at
 
-    def get_id(self):
+    def getid(self):
         return str(self._id)
 
 class Budget():
@@ -84,7 +84,7 @@ class Budget():
         self.year = year
         self.created_at = created_at
 
-    def get_id(self):
+    def getid(self):
         return str(self._id)
 
 class Expense():
@@ -99,7 +99,7 @@ class Expense():
         self.converted_amount_usd = converted_amount_usd
         self.created_at = created_at
 
-    def get_id(self):
+    def getid(self):
         return str(self._id)
 
 class Investment():
@@ -113,7 +113,7 @@ class Investment():
         self.created_at = created_at
         self.updated_at = updated_at
 
-    def get_id(self):
+    def getid(self):
         return str(self._id)
 
 class Goal():
@@ -126,5 +126,5 @@ class Goal():
         self.target_date = target_date
         self.created_at = created_at
 
-    def get_id(self):
+    def getid(self):
         return str(self._id)

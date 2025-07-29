@@ -699,7 +699,7 @@ def register_routes(app, mongoClient):
         
         return render_template('add_holding.html', form=form)
 
-    @app.route('/portfolio/holdings/edit/<int:investment_id>', methods=['GET', 'POST'])
+    @app.route('/portfolio/holdings/edit/<investment_id>', methods=['GET', 'POST'])
     @login_required
     def edit_holding(investment_id):
         investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": investment_id})
@@ -740,7 +740,7 @@ def register_routes(app, mongoClient):
         
         return render_template('edit_holding.html', form=form, investment=investment)
 
-    @app.route('/portfolio/holdings/delete/<int:investment_id>', methods=['POST'])
+    @app.route('/portfolio/holdings/delete/<investment_id>', methods=['POST'])
     @login_required
     def delete_holding(investment_id):
         investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": investment_id})
@@ -896,7 +896,7 @@ def register_routes(app, mongoClient):
         
         return jsonify({'results': results})
 
-    @app.route('/portfolio/allocation/edit/<int:asset_id>', methods=['GET', 'POST'])
+    @app.route('/portfolio/allocation/edit/<asset_id>', methods=['GET', 'POST'])
     @login_required
     def edit_asset(asset_id):
         asset = Asset.query.get_or_404(asset_id)
@@ -947,7 +947,7 @@ def register_routes(app, mongoClient):
         
         return render_template('edit_asset.html', form=form, asset=asset)
 
-    @app.route('/portfolio/allocation/delete/<int:asset_id>', methods=['POST'])
+    @app.route('/portfolio/allocation/delete/<asset_id>', methods=['POST'])
     @login_required
     def delete_asset(asset_id):
         asset = Asset.query.get_or_404(asset_id)
@@ -989,7 +989,7 @@ def register_routes(app, mongoClient):
         
         return render_template('add_retirement_plan.html', form=form)
 
-    @app.route('/portfolio/retirement/plans/delete/<int:plan_id>', methods=['POST'])
+    @app.route('/portfolio/retirement/plans/delete/<plan_id>', methods=['POST'])
     @login_required
     def delete_retirement_plan(plan_id):
         plan = RetirementPlan.query.get_or_404(plan_id)
@@ -1520,7 +1520,7 @@ def register_routes(app, mongoClient):
         budgets = Budget.query.filter_by(user_id=current_user.id).all()
         return render_template('budget.html', form=form, budgets=budgets)
 
-    @app.route('/edit_budget/<int:budget_id>', methods=['GET', 'POST'])
+    @app.route('/edit_budget/<budget_id>', methods=['GET', 'POST'])
     @login_required
     def edit_budget(budget_id):
         budget = Budget.query.get_or_404(budget_id)
@@ -1545,7 +1545,7 @@ def register_routes(app, mongoClient):
         
         return render_template('edit_budget.html', form=form, budget=budget)
 
-    @app.route('/delete_budget/<int:budget_id>', methods=['POST'])
+    @app.route('/delete_budget/<budget_id>', methods=['POST'])
     @login_required
     def delete_budget(budget_id):
         budget = Budget.query.get_or_404(budget_id)
@@ -1592,7 +1592,7 @@ def register_routes(app, mongoClient):
         expenses = Expense.query.filter_by(user_id=current_user.id).order_by(Expense.date.desc()).all()
         return render_template('expenses.html', form=form, expenses=expenses)
 
-    @app.route('/edit_expense/<int:expense_id>', methods=['GET', 'POST'])
+    @app.route('/edit_expense/<expense_id>', methods=['GET', 'POST'])
     @login_required
     def edit_expense(expense_id):
         expense = Expense.query.get_or_404(expense_id)
@@ -1633,7 +1633,7 @@ def register_routes(app, mongoClient):
         
         return render_template('edit_expense.html', form=form, expense=expense)
 
-    @app.route('/delete_expense/<int:expense_id>', methods=['POST'])
+    @app.route('/delete_expense/<expense_id>', methods=['POST'])
     @login_required
     def delete_expense(expense_id):
         expense = Expense.query.get_or_404(expense_id)
@@ -1671,7 +1671,7 @@ def register_routes(app, mongoClient):
         
         return render_template('add_goal.html', form=form)
 
-    @app.route('/goals/edit/<int:goal_id>', methods=['GET', 'POST'])
+    @app.route('/goals/edit/<goal_id>', methods=['GET', 'POST'])
     @login_required
     def edit_goal(goal_id):
         goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": goal_id})
@@ -1709,7 +1709,7 @@ def register_routes(app, mongoClient):
         
         return render_template('edit_goal.html', form=form, goal=goal)
 
-    @app.route('/goals/delete/<int:goal_id>', methods=['POST'])
+    @app.route('/goals/delete/<goal_id>', methods=['POST'])
     @login_required
     def delete_goal(goal_id):
         goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": goal_id})
