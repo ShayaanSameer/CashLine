@@ -9,8 +9,11 @@ from functools import lru_cache
 import re
 
 from config import config
-from models import db, User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
+# from models import db, User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
 from forms import LoginForm, RegistrationForm, BudgetForm, ExpenseForm, InvestmentForm, GoalForm, UserProfileForm, AssetForm, RetirementPlanForm, AutomatedRetirementForm, RetirementProfileForm, RetirementCalculatorForm
+
+from mongoModels import User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
+from mongodb_operations import mongoDBClient
 
 # Load environment variables
 load_dotenv()

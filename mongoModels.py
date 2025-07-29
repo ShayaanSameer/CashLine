@@ -22,6 +22,20 @@ class User(UserMixin):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
+class UserProfile():
+    def __init__(self, user_id, age, ra, cs, eri, csave, mc, rt, created_at=datetime.now(), updated_at=datetime.now(), id=ObjectId()):
+        self.id=id
+        self.user_id = user_id
+        self.age = age
+        self.retirement_age = ra
+        self.current_salary = cs
+        self.expected_retirement_income = eri
+        self.current_savings = csave
+        self.monthly_contribution = mc
+        self.risk_tolerance = rt
+        self.created_at = created_at
+        self.updated_at = updated_at
+
 class Asset():
     def __init__(self, user_id, symbol, name, asset_type, expected_return, weight, risk_level, created_at=datetime.now(), updated_at=datetime.now(), id=ObjectId()):
         self.id = id
