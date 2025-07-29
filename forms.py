@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FloatField, DateField, TextAreaField, SelectField, IntegerField, HiddenField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange, Optional
 from models import User
+from mongodb_operations import mongoDBClient, deserializeDoc
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -15,14 +16,20 @@ class RegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
     
+    def __init__(self, mongo_client, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mongo_client = mongo_client
+
     def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user:
+        user_doc = self.mongo_client.getCollectionEndpoint('User').find_one({'username':username.data})
+
+        if user_doc:
             raise ValidationError('Username already taken. Please choose a different one.')
     
     def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user:
+        user_doc = self.mongo_client.getCollectionEndpoint('User').find_one({'email':email.data})
+
+        if user_doc:
             raise ValidationError('Email already registered. Please use a different one.')
 
 class UserProfileForm(FlaskForm):

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import os
 from datetime import datetime, date, timedelta
@@ -7,13 +7,14 @@ import requests
 import json
 from functools import lru_cache
 import re
+from bson import ObjectId
 
 from config import config
 # from models import db, User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
 from forms import LoginForm, RegistrationForm, BudgetForm, ExpenseForm, InvestmentForm, GoalForm, UserProfileForm, AssetForm, RetirementPlanForm, AutomatedRetirementForm, RetirementProfileForm, RetirementCalculatorForm
 
-from mongoModels import User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
-from mongodb_operations import mongoDBClient
+from mongoModels import Investment, User, Budget, Expense, Goal, UserProfile, Asset, RetirementPlan
+from mongodb_operations import mongoDBClient, deserializeDoc
 
 # Load environment variables
 load_dotenv()
@@ -22,8 +23,7 @@ def create_app(config_name='default'):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
-    # Initialize extensions
-    db.init_app(app)
+    dbClient = mongoDBClient(app.config["MONGO_URI"])
     
     # Initialize Flask-Login
     login_manager = LoginManager()
@@ -33,16 +33,20 @@ def create_app(config_name='default'):
     
     @login_manager.user_loader
     def load_user(user_id):
-        return db.session.get(User, int(user_id))
+        userDoc = dbClient.getCollectionEndpoint('User').find_one({"_id":ObjectId(user_id)})
+        if userDoc:
+            return deserializeDoc.user(userDoc)
+        else:
+            return None
     
     # Register routes
-    register_routes(app)
+    register_routes(app, dbClient)
     
     return app
 
-def register_routes(app):
+def register_routes(app, mongoClient):
     # Load environment variables
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    GEMINI_API_KEY = app.config["GEMINI_API_KEY"]
     
     # Helper to get current month and year
     now = datetime.now()
@@ -545,17 +549,23 @@ def register_routes(app):
     def portfolio_overview():
         """Main portfolio dashboard - unified view of all investments and retirement planning"""
         # Get current investments
-        current_investments = Investment.query.filter_by(user_id=current_user.id).all()
-        
+        current_investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":ObjectId(current_user._id)}))
+        for i in range(0, len(current_investments)):
+            current_investments[i] = deserializeDoc.investment(current_investments[i])
+
         # Get retirement profile
-        profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+        profile = deserializeDoc.user_profile(mongoClient.getCollectionEndpoint('UserProfile').find_one({"user_id":current_user._id}))
         
         # Get retirement assets (portfolio allocation)
-        retirement_assets = Asset.query.filter_by(user_id=current_user.id).all()
-        
+        retirement_assets = list(mongoClient.getCollectionEndpoint('Asset').find({"user_id":current_user._id}))
+        for i in range(0, len(retirement_assets)):
+            retirement_assets[i] = deserializeDoc.asset(retirement_assets[i])
+
         # Get retirement plans
-        retirement_plans = RetirementPlan.query.filter_by(user_id=current_user.id).all()
-        
+        retirement_plans = list(mongoClient.getCollectionEndpoint('RetirementPlan').find({"user_id":current_user._id}))
+        for i in range(0, len(retirement_plans)):
+            retirement_plans[i] = deserializeDoc.retirement_plan(retirement_plans[i])
+
         # Get real-time prices for current investments (limit to first 5 to avoid API limits)
         investment_prices = {}
         for investment in current_investments[:5]:
@@ -618,7 +628,7 @@ def register_routes(app):
     @login_required
     def current_holdings():
         """Manage current investment holdings with real-time tracking"""
-        investments = Investment.query.filter_by(user_id=current_user.id).all()
+        investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":current_user._id}))
         
         # Calculate portfolio summary values
         total_purchase_value = 0
@@ -675,14 +685,13 @@ def register_routes(app):
         form = InvestmentForm()
         if form.validate_on_submit():
             investment = Investment(
-                user_id=current_user.id,
+                user_id=current_user._id,
                 symbol=form.symbol.data.upper(),
                 shares=form.shares.data,
                 purchase_price=form.purchase_price.data,
                 purchase_date=form.purchase_date.data
             )
-            db.session.add(investment)
-            db.session.commit()
+            mongoClient.getCollectionEndpoint('Investment').insert_one(vars(investment))
             flash('Investment added successfully!', 'success')
             return redirect(url_for('current_holdings'))
         
@@ -691,8 +700,12 @@ def register_routes(app):
     @app.route('/portfolio/holdings/edit/<int:investment_id>', methods=['GET', 'POST'])
     @login_required
     def edit_holding(investment_id):
-        investment = Investment.query.get_or_404(investment_id)
-        if investment.user_id != current_user.id:
+        investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": investment_id})
+        if not investment_doc:
+            abort(404)
+        investment = deserializeDoc.investment(investment_doc)
+        
+        if investment.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('current_holdings'))
         
@@ -702,9 +715,18 @@ def register_routes(app):
             investment.shares = form.shares.data
             investment.purchase_price = form.purchase_price.data
             investment.purchase_date = form.purchase_date.data
-            investment.updated_at = datetime.utcnow()
+            investment.updated_at = datetime.now()
             
-            db.session.commit()
+            mongoClient.getCollectionEndpoint('Investment').update_one(
+                {"_id": investment_id},
+                {"$set": {
+                    "symbol": investment.symbol,
+                    "shares": investment.shares,
+                    "purchase_price": investment.purchase_price,
+                    "purchase_date": investment.purchase_date,
+                    "updated_at": investment.updated_at
+                }})
+
             flash('Investment updated successfully!', 'success')
             return redirect(url_for('current_holdings'))
         
@@ -719,13 +741,16 @@ def register_routes(app):
     @app.route('/portfolio/holdings/delete/<int:investment_id>', methods=['POST'])
     @login_required
     def delete_holding(investment_id):
-        investment = Investment.query.get_or_404(investment_id)
-        if investment.user_id != current_user.id:
+        investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": investment_id})
+        if not investment_doc:
+            abort(404)
+        investment = deserializeDoc.investment(investment_doc)
+
+        if investment.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('current_holdings'))
         
-        db.session.delete(investment)
-        db.session.commit()
+        mongoClient.getConnectionEndpoint('Investment').delete_one({"_id" : investment_id})
         flash('Investment deleted successfully!', 'success')
         return redirect(url_for('current_holdings'))
 
@@ -1279,12 +1304,25 @@ def register_routes(app):
             session['currency_rate'] = 1.0
         
         # Get user's data
-        budgets = Budget.query.filter_by(user_id=current_user.id).all()
-        expenses = Expense.query.filter_by(user_id=current_user.id).all()
-        investments = Investment.query.filter_by(user_id=current_user.id).all()
-        goals = Goal.query.filter_by(user_id=current_user.id).all()
+        budgets = list(mongoClient.getCollectionEndpoint('Budget').find({"user_id":current_user._id}))
+        for i in range(0, len(budgets)):
+            budgets[i] = deserializeDoc.budget(budgets[i])
+        # budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        expenses = list(mongoClient.getCollectionEndpoint('Expense').find({"user_id":current_user._id}))
+        for i in range(0, len(budgets)):
+            expenses[i] = deserializeDoc.expense(expenses[i])
+        # expenses = Expense.query.filter_by(user_id=current_user.id).all()
+        investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":current_user._id}))
+        for i in range(0, len(investments)):
+            investments[i] = deserializeDoc.investment(investments[i])
+        # investments = Investment.query.filter_by(user_id=current_user.id).all()
+        goals = list(mongoClient.getCollectionEndpoint('Goal').find({"user_id":current_user._id}))
+        for i in range(0, len(goals)):
+            goals[i] = deserializeDoc.goal(goals[i])
         
-        print(f"DEBUG: Dashboard - User {current_user.id} has {len(budgets)} budgets, {len(expenses)} expenses, {len(investments)} investments, {len(goals)} goals")
+        # goals = Goal.query.filter_by(user_id=current_user.id).all()
+        
+        print(f"DEBUG: Dashboard - User {current_user._id} has {len(budgets)} budgets, {len(expenses)} expenses, {len(investments)} investments, {len(goals)} goals")
         
         # Calculate totals
         total_budget = sum(b.limit_amount for b in budgets)
@@ -1398,10 +1436,12 @@ def register_routes(app):
         
         form = LoginForm()
         if form.validate_on_submit():
-            user = User.query.filter_by(username=form.username.data).first()
+            user_doc = mongoClient.getCollectionEndpoint('User').find_one({'username':form.username.data})
+            user = deserializeDoc.user(user_doc)
             if user and user.check_password(form.password.data):
                 login_user(user)
                 next_page = request.args.get('next')
+                print("Logging in user:", user.username, " Authenticated?", user.is_authenticated)
                 return redirect(next_page) if next_page else redirect(url_for('dashboard'))
             else:
                 if not user:
@@ -1409,6 +1449,8 @@ def register_routes(app):
                 else:
                     flash('Incorrect password. Please try again.', 'error')
         
+
+
         return render_template('login.html', form=form)
 
     @app.route('/register', methods=['GET', 'POST'])
@@ -1416,16 +1458,20 @@ def register_routes(app):
         if current_user.is_authenticated:
             return redirect(url_for('dashboard'))
         
-        form = RegistrationForm()
+        form = RegistrationForm(mongoClient, request.form)
         if form.validate_on_submit():
             # Check if username already exists
-            existing_user = User.query.filter_by(username=form.username.data).first()
+            user_doc = mongoClient.getCollectionEndpoint('User').find_one({'username':form.username.data})
+            existing_user = deserializeDoc.user(user_doc)
+
             if existing_user:
                 flash('Username already exists. Please choose a different username.', 'error')
                 return render_template('register.html', form=form)
             
             # Check if email already exists
-            existing_email = User.query.filter_by(email=form.email.data).first()
+            user_doc = mongoClient.getCollectionEndpoint('User').find_one({'email':form.email.data})
+            existing_email = deserializeDoc.user(user_doc)
+
             if existing_email:
                 flash('Email already registered. Please use a different email or try logging in.', 'error')
                 return render_template('register.html', form=form)
@@ -1436,12 +1482,12 @@ def register_routes(app):
                     email=form.email.data
                 )
                 user.set_password(form.password.data)
-                db.session.add(user)
-                db.session.commit()
+
+                mongoClient.getCollectionEndpoint('User').insert_one(vars(user))
+
                 flash('Registration successful! Please log in with your new account.', 'login_success')
                 return redirect(url_for('login'))
             except Exception as e:
-                db.session.rollback()
                 flash('Registration failed. Please try again.', 'error')
         
         return render_template('register.html', form=form)
@@ -1626,8 +1672,12 @@ def register_routes(app):
     @app.route('/goals/edit/<int:goal_id>', methods=['GET', 'POST'])
     @login_required
     def edit_goal(goal_id):
-        goal = Goal.query.get_or_404(goal_id)
-        if goal.user_id != current_user.id:
+        goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": goal_id})
+        if not goal_doc:
+            abort(404)
+        goal = deserializeDoc.goal(goal_doc)
+
+        if goal.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('goals'))
         
@@ -1637,7 +1687,16 @@ def register_routes(app):
             goal.target_amount = form.target_amount.data
             goal.current_amount = form.current_amount.data
             goal.target_date = form.target_date.data
-            db.session.commit()
+            
+            mongoClient.getCollectionEndpoint('Goal').update_one(
+                {"_id": goal_id},
+                {"$set": {
+                    "name": goal.name,
+                    "target_amount": goal.target_amount,
+                    "current_amount": goal.current_amount,
+                    "target_date": goal.target_date,
+                }})
+            
             flash('Goal updated successfully!', 'success')
             return redirect(url_for('goals'))
         elif request.method == 'GET':
@@ -1651,13 +1710,15 @@ def register_routes(app):
     @app.route('/goals/delete/<int:goal_id>', methods=['POST'])
     @login_required
     def delete_goal(goal_id):
-        goal = Goal.query.get_or_404(goal_id)
-        if goal.user_id != current_user.id:
+        goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": goal_id})
+        if not goal_doc:
+            abort(404)
+        goal = deserializeDoc.goal(goal_doc)
+        if goal.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('goals'))
         
-        db.session.delete(goal)
-        db.session.commit()
+        mongoClient.getConnectionEndpoint('Goal').delete_one({"_id" : goal_id})
         flash('Goal deleted successfully!', 'success')
         return redirect(url_for('goals'))
 
@@ -1891,7 +1952,7 @@ def register_routes(app):
                         month=datetime.now().strftime('%B'),
                         year=datetime.now().year
                     )
-                    db.session.add(budget)
+                    mongoClient.getCollectionEndpoint("Budget").insertOne(vars(budget))
         
         # Save AI-suggested savings goals
         if goal_names and goal_targets:
@@ -1912,14 +1973,12 @@ def register_routes(app):
                         current_amount=0,
                         target_date=target_date
                     )
-                    db.session.add(goal)
+                    mongoClient.getCollectionEndpoint("Goal").insertOne(vars(goal))
         
         try:
-            db.session.commit()
             flash('Welcome! Your personalized budget has been set up.', 'success')
             return redirect(url_for('dashboard'))
         except Exception as e:
-            db.session.rollback()
             flash('An error occurred while setting up your budget.', 'error')
             return redirect(url_for('dashboard'))
     
@@ -1929,7 +1988,6 @@ def register_routes(app):
     
     @app.errorhandler(500)
     def internal_error(error):
-        db.session.rollback()
         return render_template('500.html'), 500
 
 # Create the app instance
