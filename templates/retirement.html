@@ -135,8 +135,8 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{{ url_for('edit_asset', asset_id=asset.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                                            <form method="POST" action="{{ url_for('delete_asset', asset_id=asset.id) }}" class="d-inline">
+                                            <a href="{{ url_for('edit_asset', asset_id=asset._id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                            <form method="POST" action="{{ url_for('delete_asset', asset_id=asset._id) }}" class="d-inline">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
                                             </form>
                                         </td>
@@ -187,7 +187,7 @@
                                         <td>${{ "{:,.0f}".format(plan.monthly_contribution_needed) }}</td>
                                         <td>${{ "{:,.0f}".format(plan.projected_amount) }}</td>
                                         <td>
-                                            <form method="POST" action="{{ url_for('delete_retirement_plan', plan_id=plan.id) }}" class="d-inline">
+                                            <form method="POST" action="{{ url_for('delete_retirement_plan', plan_id=plan._id) }}" class="d-inline">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
                                             </form>
                                         </td>

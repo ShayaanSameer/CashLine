@@ -35,8 +35,8 @@
                                             <td>{{ investment.purchase_date.strftime('%Y-%m-%d') }}</td>
                                             <td>
                                                 <div class="btn-group btn-group-sm">
-                                                    <a href="{{ url_for('edit_investment', investment_id=investment.id) }}" class="btn btn-outline-primary">Edit</a>
-                                                    <form method="POST" action="{{ url_for('delete_investment', investment_id=investment.id) }}" class="d-inline">
+                                                    <a href="{{ url_for('edit_investment', investment_id=investment._id) }}" class="btn btn-outline-primary">Edit</a>
+                                                    <form method="POST" action="{{ url_for('delete_investment', investment_id=investment._id) }}" class="d-inline">
                                                         <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
                                                     </form>
                                                 </div>
