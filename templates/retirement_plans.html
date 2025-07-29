@@ -37,7 +37,8 @@
                     {% if plans %}
                         {% set total_target = plans | sum(attribute='target_amount') %}
                         {% set total_monthly_needed = plans | sum(attribute='monthly_contribution_needed') %}
-                        {% set avg_years = (plans | sum(attribute='years_to_retirement') / plans | length) | round(1) %}
+                        {% set valid_years = plans | map(attribute='years_to_retirement') | select('!=', None) | list %}
+                        {% set avg_years = (valid_years | sum / (valid_years | length)) | round(1) if valid_years else 0 %}
                         
                         <div class="row">
                             <div class="col-md-3">
@@ -140,7 +141,7 @@
                     
                     <p><strong>Highest Monthly Contribution:</strong> ${{ "{:,.0f}".format(highest_monthly.monthly_contribution_needed) }}</p>
                     <p><strong>Lowest Monthly Contribution:</strong> ${{ "{:,.0f}".format(lowest_monthly.monthly_contribution_needed) }}</p>
-                    <p><strong>Average Monthly Contribution:</strong> ${{ "{:,.0f}".format((plans | sum(attribute='monthly_contribution_needed') / plans | length) | round) }}</p>
+                    <p><strong>Average Monthly Contribution:</strong> ${{ "{:,.0f}".format(((plans | sum(attribute='monthly_contribution_needed')) / (plans | length)) | round) }}</p>
                     
                     {% if highest_monthly.monthly_contribution_needed > 5000 %}
                         <div class="alert alert-warning">
@@ -158,12 +159,20 @@
                     <h5 class="mb-0">Timeline Analysis</h5>
                 </div>
                 <div class="card-body">
-                    {% set shortest_timeline = plans | min(attribute='years_to_retirement') %}
-                    {% set longest_timeline = plans | max(attribute='years_to_retirement') %}
-                    
-                    <p><strong>Shortest Timeline:</strong> {{ shortest_timeline.years_to_retirement }} years</p>
-                    <p><strong>Longest Timeline:</strong> {{ longest_timeline.years_to_retirement }} years</p>
-                    <p><strong>Average Timeline:</strong> {{ ((plans | sum(attribute='years_to_retirement') / plans | length) | round(1)) }} years</p>
+                    {% set valid_timeline_plans = plans | selectattr('years_to_retirement', '!=', None) | list %}
+                    {% if valid_timeline_plans %}
+                        {% set shortest_timeline = valid_timeline_plans | min(attribute='years_to_retirement') %}
+                        {% set longest_timeline = valid_timeline_plans | max(attribute='years_to_retirement') %}
+
+                        <p><strong>Shortest Timeline:</strong> {{ shortest_timeline.years_to_retirement }} years</p>
+                        <p><strong>Longest Timeline:</strong> {{ longest_timeline.years_to_retirement }} years</p>
+                        {% set valid_years = valid_timeline_plans | map(attribute='years_to_retirement') | list %}
+                        <p><strong>Average Timeline:</strong> {{ ((valid_years | sum / (valid_years | length)) | round(1)) if valid_years else 0 }} years</p>
+                    {% else %}
+                        <p><strong>Shortest Timeline:</strong> N/A</p>
+                        <p><strong>Longest Timeline:</strong> N/A</p>
+                        <p><strong>Average Timeline:</strong> 0 years</p>
+                    {% endif %}
                     
                     {% if shortest_timeline.years_to_retirement < 10 %}
                         <div class="alert alert-info">

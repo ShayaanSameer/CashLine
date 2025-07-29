@@ -59,12 +59,12 @@ class Asset():
         return str(self._id)
 
 class RetirementPlan():
-    def __init__(self, user_id, name, target_amount, ytr, err, mcn, pa, c_at=datetime.now(), u_at=datetime.now(), _id=ObjectId()):
+    def __init__(self, user_id, name, target_amount, err, mcn, pa, ytr = 0, c_at=datetime.now(), u_at=datetime.now(), _id=ObjectId()):
         self._id = _id
         self.user_id = user_id
         self.name = name
         self.target_amount = target_amount
-        self.years_to_retirment = ytr
+        self.years_to_retirement = ytr
         self.expected_return_rate = err
         self.monthly_contribution_needed = mcn
         self.projected_amount = pa

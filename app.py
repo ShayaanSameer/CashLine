@@ -692,7 +692,9 @@ def register_routes(app, mongoClient):
                 purchase_price=form.purchase_price.data,
                 purchase_date=datetime.combine(form.purchase_date.data, datetime.min.time())
             )
-            mongoClient.getCollectionEndpoint('Investment').insert_one(vars(investment))
+            doc = vars(investment)
+            doc.pop("_id", None)
+            mongoClient.getCollectionEndpoint('Investment').insert_one(doc)
             flash('Investment added successfully!', 'success')
             return redirect(url_for('current_holdings'))
         
@@ -715,7 +717,7 @@ def register_routes(app, mongoClient):
             investment.symbol = form.symbol.data.upper()
             investment.shares = form.shares.data
             investment.purchase_price = form.purchase_price.data
-            investment.purchase_date = form.purchase_date.data
+            investment.purchase_date = datetime.combine(form.purchase_date.data, datetime.min.time())
             investment.updated_at = datetime.now()
             
             mongoClient.getCollectionEndpoint('Investment').update_one(
@@ -751,7 +753,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('current_holdings'))
         
-        mongoClient.getConnectionEndpoint('Investment').delete_one({"_id" : ObjectId(investment_id)})
+        mongoClient.getCollectionEndpoint('Investment').delete_one({"_id" : ObjectId(investment_id)})
         flash('Investment deleted successfully!', 'success')
         return redirect(url_for('current_holdings'))
 
@@ -764,11 +766,11 @@ def register_routes(app, mongoClient):
         profile = deserializeDoc.user_profile(profile_doc)
         
         retirement_plans = list(mongoClient.getCollectionEndpoint('RetirementPlan').find({"user_id":current_user._id}))
-        for i in range(retirement_plans):
+        for i in range(len(retirement_plans)):
             retirement_plans[i] = deserializeDoc.retirement_plan(retirement_plans[i])
 
         retirement_assets = list(mongoClient.getCollectionEndpoint('Asset').find({"user_id":current_user._id}))
-        for i in range(retirement_assets):
+        for i in range(len(retirement_assets)):
             retirement_assets[i] = deserializeDoc.asset(retirement_assets[i])
         
         return render_template('retirement_planning.html',
@@ -796,12 +798,14 @@ def register_routes(app, mongoClient):
                 profile = UserProfile(
                     user_id=current_user._id,
                     age=form.current_age.data,
-                    retirement_age=form.retirement_age.data,
-                    current_salary=form.current_income.data,
-                    expected_retirement_income=form.expected_retirement_income.data,
-                    current_savings=form.current_savings.data
+                    ra=form.retirement_age.data,
+                    cs=form.current_income.data,
+                    eri=form.expected_retirement_income.data,
+                    csave=form.current_savings.data
                 )
-                mongoClient.getCollectionEndpoint('UserProfile').insert_one(vars(profile))
+                docs = vars(profile)
+                docs.pop("_id", None)
+                mongoClient.getCollectionEndpoint('UserProfile').insert_one(docs)
             
             flash('Retirement profile updated successfully!', 'success')
             return redirect(url_for('retirement_planning'))
@@ -820,7 +824,7 @@ def register_routes(app, mongoClient):
     @login_required
     def asset_allocation():
         """Manage retirement portfolio asset allocation"""
-        assets = list(mongoClient.getConnectionEndpoint('Asset').find({"user_id":current_user._id}))
+        assets = list(mongoClient.getCollectionEndpoint('Asset').find({"user_id":current_user._id}))
         for i in range(len(assets)):
             assets[i] = deserializeDoc.asset(assets[i])
         
@@ -849,7 +853,7 @@ def register_routes(app, mongoClient):
                 )
             
             # Check weight constraints
-            assets = list(mongoClient.getConnectionEndpoint('Asset').find({"user_id":current_user._id}))
+            assets = list(mongoClient.getCollectionEndpoint('Asset').find({"user_id":current_user._id}))
             for i in range(len(assets)):
                 assets[i] = deserializeDoc.asset(assets[i])
 
@@ -867,7 +871,10 @@ def register_routes(app, mongoClient):
                 weight=form.weight.data,
                 risk_level=form.risk_level.data
             )
-            mongoClient.getConnectionEndpoint('Asset').insert_one(vars(asset))
+
+            doc = vars(asset)
+            doc.pop("_id", None)
+            mongoClient.getCollectionEndpoint('Asset').insert_one(doc)
             flash('Asset added successfully!', 'success')
             return redirect(url_for('asset_allocation'))
         
@@ -921,6 +928,7 @@ def register_routes(app, mongoClient):
         
         form = AssetForm()
         
+        print("Form errors:", form.errors)
         if form.validate_on_submit():
             # Auto-populate expected return and risk level if not provided or is 0
             if not form.expected_return.data or form.expected_return.data == 0:
@@ -935,13 +943,14 @@ def register_routes(app, mongoClient):
                 )
             
             # Check weight constraints
-            assets = list(mongoClient.getConnectionEndpoint('Asset').find({"user_id":current_user._id}))
+            assets = list(mongoClient.getCollectionEndpoint('Asset').find({"user_id":current_user._id}))
             for i in range(len(assets)):
                 assets[i] = deserializeDoc.asset(assets[i])
 
-            existing_weight = sum(a.weight for a in assets)
+            existing_weight = sum(a.weight for a in assets) - asset.weight
 
             if existing_weight + form.weight.data > 100:
+                print("hello123")
                 flash('Total portfolio weight cannot exceed 100%. Current total: {:.1f}%'.format(existing_weight), 'error')
                 return render_template('edit_asset.html', form=form, asset=asset)
             
@@ -954,7 +963,7 @@ def register_routes(app, mongoClient):
             asset.updated_at = datetime.now()
 
             mongoClient.getCollectionEndpoint('Asset').update_one(
-                {"_id":ObjectId(asset_id)},
+                {"_id": ObjectId(asset_id)},
                 {"$set": {
                     "symbol" : asset.symbol,
                     "name" : asset.name,
@@ -991,7 +1000,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('asset_allocation'))
         
-        mongoClient.getConnectionEndpoint('Asset').delete_one({"_id" : ObjectId(asset_id)})
+        mongoClient.getCollectionEndpoint('Asset').delete_one({"_id" : ObjectId(asset_id)})
         flash('Asset deleted successfully!', 'success')
         return redirect(url_for('asset_allocation'))
 
@@ -1000,7 +1009,8 @@ def register_routes(app, mongoClient):
     @login_required
     def retirement_plans():
         """Manage retirement plans"""
-        plans = mongoClient.getCollectionEndpoint("RetirementPlan").find({"user_id":current_user._id})
+        plans = list(mongoClient.getCollectionEndpoint("RetirementPlan").find({"user_id":current_user._id}))
+
         for i in range(len(plans)):
             plans[i] = deserializeDoc.retirement_plan(plans[i])
 
@@ -1015,12 +1025,14 @@ def register_routes(app, mongoClient):
                 user_id=current_user._id,
                 name=form.name.data,
                 target_amount=form.target_amount.data,
-                years_to_retirement=form.years_to_retirement.data,
-                expected_return_rate=form.expected_return_rate.data,
-                monthly_contribution_needed=form.monthly_contribution.data,
-                projected_amount=0  # Will be calculated based on current savings and returns
+                ytr=form.years_to_retirement.data,
+                err=form.expected_return_rate.data,
+                mcn=0,
+                pa=0  # Will be calculated based on current savings and returns
             )
-            mongoClient.getConnectionEndpoint('RetirementPlan').insert_one(vars(plan))
+            docs = vars(plan)
+            docs.pop("_id", None)
+            mongoClient.getCollectionEndpoint('RetirementPlan').insert_one(docs)
             flash('Retirement plan added successfully!', 'success')
             return redirect(url_for('retirement_plans'))
         
@@ -1038,7 +1050,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('retirement_plans'))
         
-        mongoClient.getConnectionEndpoint('RetirementPlan').delete_one({"_id" : ObjectId(plan_id)})
+        mongoClient.getCollectionEndpoint('RetirementPlan').delete_one({"_id" : ObjectId(plan_id)})
         flash('Retirement plan deleted successfully!', 'success')
         return redirect(url_for('retirement_plans'))
 
@@ -1125,13 +1137,15 @@ def register_routes(app, mongoClient):
                 user_id=current_user._id,
                 name=f"Automated {risk_tolerance} Plan",
                 target_amount=target_amount,
-                years_to_retirement=years_to_retirement,
-                expected_return_rate=expected_return,
-                monthly_contribution_needed=monthly_savings,
-                projected_amount=current_savings * (1 + expected_return/100)**years_to_retirement
+                ytr=years_to_retirement,
+                err=expected_return,
+                mcn=monthly_savings,
+                pa=current_savings * (1 + expected_return/100)**years_to_retirement
             )
+            docs = vars(plan)
+            docs.pop("_id", None)
             
-            mongoClient.getCollectionEndpoint('RetirementPlan').insert_one(vars(plan))
+            mongoClient.getCollectionEndpoint('RetirementPlan').insert_one(docs)
 
             flash(f'Automated retirement plan created! Target: ${target_amount:,.0f}, Monthly savings: ${monthly_savings:,.0f}', 'success')
             return redirect(url_for('retirement_planning'))
@@ -1374,7 +1388,7 @@ def register_routes(app, mongoClient):
             budgets[i] = deserializeDoc.budget(budgets[i])
         # budgets = Budget.query.filter_by(user_id=current_user.id).all()
         expenses = list(mongoClient.getCollectionEndpoint('Expense').find({"user_id":current_user._id}))
-        for i in range(0, len(budgets)):
+        for i in range(0, len(expenses)):
             expenses[i] = deserializeDoc.expense(expenses[i])
         # expenses = Expense.query.filter_by(user_id=current_user.id).all()
         investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":current_user._id}))
@@ -1547,7 +1561,9 @@ def register_routes(app, mongoClient):
                 )
                 user.set_password(form.password.data)
 
-                mongoClient.getCollectionEndpoint('User').insert_one(vars(user))
+                doc = vars(user)
+                doc.pop("_id", None)
+                mongoClient.getCollectionEndpoint('User').insert_one(doc)
 
                 flash('Registration successful! Please log in with your new account.', 'login_success')
                 return redirect(url_for('login'))
@@ -1574,7 +1590,9 @@ def register_routes(app, mongoClient):
                 month=form.month.data,
                 year=int(form.year.data)
             )
-            mongoClient.getCollectionEndpoint('Budget').insert_one(vars(budget))
+            doc = vars(budget)
+            doc.pop("_id", None)
+            mongoClient.getCollectionEndpoint('Budget').insert_one(doc)
 
             flash('Budget added successfully!', 'success')
             return redirect(url_for('budget'))
@@ -1636,7 +1654,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('budget'))
         
-        mongoClient.getConnectionEndpoint('Budget').delete_one({"_id" : ObjectId(budget_id)})
+        mongoClient.getCollectionEndpoint('Budget').delete_one({"_id" : ObjectId(budget_id)})
         flash('Budget deleted successfully!', 'success')
         return redirect(url_for('budget'))
 
@@ -1646,7 +1664,7 @@ def register_routes(app, mongoClient):
         form = ExpenseForm()
         
         # Get categories from existing budgets
-        budgets = list(mongoClient.getConnectionEndpoint('Budget').find({"user_id":current_user._id}))
+        budgets = list(mongoClient.getCollectionEndpoint('Budget').find({"user_id":current_user._id}))
         for i in range(len(budgets)):
             budgets[i] = deserializeDoc.budget(budgets[i])
 
@@ -1665,11 +1683,13 @@ def register_routes(app, mongoClient):
                 amount=form.amount.data,
                 category=form.category.data,
                 description=form.description.data,
-                date=form.date.data,
+                date=datetime.combine(form.date.data, datetime.min.time()),
                 currency=form.currency.data,
                 converted_amount_usd=amount_usd
             )
-            mongoClient.getCollectionEndpoint('Expense').insert_one(vars(expense))
+            doc = vars(expense)
+            doc.pop("_id", None)
+            mongoClient.getCollectionEndpoint('Expense').insert_one(doc)
             flash('Expense added successfully!', 'success')
             return redirect(url_for('expenses'))
         
@@ -1695,7 +1715,7 @@ def register_routes(app, mongoClient):
         form = ExpenseForm()
         
         # Get categories from existing budgets
-        budgets = list(mongoClient.getConnectionEndpoint('Budget').find({"user_id":current_user._id}))
+        budgets = list(mongoClient.getCollectionEndpoint('Budget').find({"user_id":current_user._id}))
         for i in range(len(budgets)):
             budgets[i] = deserializeDoc.budget(budgets[i])
 
@@ -1712,7 +1732,7 @@ def register_routes(app, mongoClient):
             expense.amount = form.amount.data
             expense.category = form.category.data
             expense.description = form.description.data
-            expense.date = form.date.data
+            expense.date = datetime.combine(form.date.data, datetime.min.time())
             expense.currency = form.currency.data
             expense.converted_amount_usd = amount_usd
             
@@ -1750,7 +1770,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('expenses'))
         
-        mongoClient.getConnectionEndpoint('Expense').delete_one({"_id" : ObjectId(expense_id)})
+        mongoClient.getCollectionEndpoint('Expense').delete_one({"_id" : ObjectId(expense_id)})
         flash('Expense deleted successfully!', 'success')
         return redirect(url_for('expenses'))
 
@@ -1773,9 +1793,12 @@ def register_routes(app, mongoClient):
                 name=form.name.data,
                 target_amount=form.target_amount.data,
                 current_amount=form.current_amount.data,
-                target_date=form.target_date.data
+                target_date=datetime.combine(form.target_date.data, datetime.min.time())
             )
-            mongoClient.getConnectionEndpoint('Goal').insert_one(vars(goal))
+
+            doc = vars(goal)
+            doc.pop("_id", None)
+            mongoClient.getCollectionEndpoint('Goal').insert_one(doc)
             flash('Goal added successfully!', 'success')
             return redirect(url_for('goals'))
         
@@ -1798,7 +1821,7 @@ def register_routes(app, mongoClient):
             goal.name = form.name.data
             goal.target_amount = form.target_amount.data
             goal.current_amount = form.current_amount.data
-            goal.target_date = form.target_date.data
+            goal.target_date = datetime.combine(form.target_date.data, datetime.min.time())
             
             mongoClient.getCollectionEndpoint('Goal').update_one(
                 {"_id": ObjectId(goal_id)},
@@ -1830,7 +1853,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('goals'))
         
-        mongoClient.getConnectionEndpoint('Goal').delete_one({"_id" : ObjectId(goal_id)})
+        mongoClient.getCollectionEndpoint('Goal').delete_one({"_id" : ObjectId(goal_id)})
         flash('Goal deleted successfully!', 'success')
         return redirect(url_for('goals'))
 
@@ -2064,7 +2087,9 @@ def register_routes(app, mongoClient):
                         month=datetime.now().strftime('%B'),
                         year=datetime.now().year
                     )
-                    mongoClient.getCollectionEndpoint("Budget").insertOne(vars(budget))
+                    doc = vars(budget)
+                    doc.pop("_id", None)
+                    mongoClient.getCollectionEndpoint("Budget").insert_one(doc)
         
         # Save AI-suggested savings goals
         if goal_names and goal_targets:
@@ -2085,7 +2110,9 @@ def register_routes(app, mongoClient):
                         current_amount=0,
                         target_date=target_date
                     )
-                    mongoClient.getCollectionEndpoint("Goal").insertOne(vars(goal))
+                    doc = vars(goal)
+                    doc.pop("_id", None)
+                    mongoClient.getCollectionEndpoint("Goal").insert_one(doc)
         
         try:
             flash('Welcome! Your personalized budget has been set up.', 'success')
