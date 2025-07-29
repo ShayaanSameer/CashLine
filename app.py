@@ -13,7 +13,7 @@ from config import config
 # from models import db, User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
 from forms import LoginForm, RegistrationForm, BudgetForm, ExpenseForm, InvestmentForm, GoalForm, UserProfileForm, AssetForm, RetirementPlanForm, AutomatedRetirementForm, RetirementProfileForm, RetirementCalculatorForm
 import time
-from mongoModels import Investment, User, Budget, Expense, Goal, UserProfile, Asset, RetirementPlan
+from mongoModels import Investment#, User, Budget, Expense, Goal, UserProfile, Asset, RetirementPlan
 from mongodb_operations import mongoDBClient, deserializeDoc
 
 # Load environment variables
@@ -549,7 +549,7 @@ def register_routes(app, mongoClient):
     def portfolio_overview():
         """Main portfolio dashboard - unified view of all investments and retirement planning"""
         # Get current investments
-        current_investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":ObjectId(current_user._id)}))
+        current_investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":current_user._id}))
         for i in range(0, len(current_investments)):
             current_investments[i] = deserializeDoc.investment(current_investments[i])
 
@@ -702,7 +702,7 @@ def register_routes(app, mongoClient):
     @app.route('/portfolio/holdings/edit/<investment_id>', methods=['GET', 'POST'])
     @login_required
     def edit_holding(investment_id):
-        investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": investment_id})
+        investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": ObjectId(investment_id)})
         if not investment_doc:
             abort(404)
         investment = deserializeDoc.investment(investment_doc)
@@ -743,7 +743,7 @@ def register_routes(app, mongoClient):
     @app.route('/portfolio/holdings/delete/<investment_id>', methods=['POST'])
     @login_required
     def delete_holding(investment_id):
-        investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": investment_id})
+        investment_doc = mongoClient.getCollectionEndpoint('Investment').find_one({"_id": ObjectId(investment_id)})
         if not investment_doc:
             abort(404)
         investment = deserializeDoc.investment(investment_doc)
@@ -752,7 +752,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('current_holdings'))
         
-        mongoClient.getConnectionEndpoint('Investment').delete_one({"_id" : investment_id})
+        mongoClient.getConnectionEndpoint('Investment').delete_one({"_id" : ObjectId(investment_id)})
         flash('Investment deleted successfully!', 'success')
         return redirect(url_for('current_holdings'))
 
@@ -761,9 +761,16 @@ def register_routes(app, mongoClient):
     @login_required
     def retirement_planning():
         """Retirement planning dashboard"""
-        profile = UserProfile.query.filter_by(user_id=current_user.id).first()
-        retirement_plans = RetirementPlan.query.filter_by(user_id=current_user.id).all()
-        retirement_assets = Asset.query.filter_by(user_id=current_user.id).all()
+        profile_doc = mongoClient.getCollectionEndpoint('UserProfile').find_one({"user_id":current_user._id})
+        profile = deserializeDoc.user_profile(profile_doc)
+        
+        retirement_plans = list(mongoClient.getCollectionEndpoint('RetirementPlan').find({"user_id":current_user._id}))
+        for i in range(retirement_plans):
+            retirement_plans[i] = deserializeDoc.retirement_plan(retirement_plans[i])
+
+        retirement_assets = list(mongoClient.getCollectionEndpoint('Asset').find({"user_id":current_user._id}))
+        for i in range(retirement_assets):
+            retirement_assets[i] = deserializeDoc.asset(retirement_assets[i])
         
         return render_template('retirement_planning.html',
                              profile=profile,
@@ -774,7 +781,8 @@ def register_routes(app, mongoClient):
     @login_required
     def retirement_profile():
         """Manage retirement profile and goals"""
-        profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+        profile_doc = mongoClient.getCollectionEndpoint('UserProfile').find_one({"user_id":current_user._id})
+        profile = deserializeDoc.user_profile(profile_doc)
         form = RetirementProfileForm()
         
         if form.validate_on_submit():
@@ -784,19 +792,18 @@ def register_routes(app, mongoClient):
                 profile.current_salary = form.current_income.data
                 profile.expected_retirement_income = form.expected_retirement_income.data
                 profile.current_savings = form.current_savings.data
-                profile.updated_at = datetime.utcnow()
+                profile.updated_at = datetime.now()
             else:
                 profile = UserProfile(
-                    user_id=current_user.id,
+                    user_id=current_user._id,
                     age=form.current_age.data,
                     retirement_age=form.retirement_age.data,
                     current_salary=form.current_income.data,
                     expected_retirement_income=form.expected_retirement_income.data,
                     current_savings=form.current_savings.data
                 )
-                db.session.add(profile)
+                mongoClient.getCollectionEndpoint('UserProfile').insert_one(vars(profile))
             
-            db.session.commit()
             flash('Retirement profile updated successfully!', 'success')
             return redirect(url_for('retirement_planning'))
         
@@ -814,7 +821,9 @@ def register_routes(app, mongoClient):
     @login_required
     def asset_allocation():
         """Manage retirement portfolio asset allocation"""
-        assets = Asset.query.filter_by(user_id=current_user.id).all()
+        assets = list(mongoClient.getConnectionEndpoint('Asset').find({"user_id":current_user._id}))
+        for i in range(len(assets)):
+            assets[i] = deserializeDoc.asset(assets[i])
         
         # Calculate portfolio summary
         total_weight = sum(asset.weight for asset in assets)
@@ -841,13 +850,17 @@ def register_routes(app, mongoClient):
                 )
             
             # Check weight constraints
-            existing_weight = sum(a.weight for a in Asset.query.filter_by(user_id=current_user.id).all())
+            assets = list(mongoClient.getConnectionEndpoint('Asset').find({"user_id":current_user._id}))
+            for i in range(len(assets)):
+                assets[i] = deserializeDoc.asset(assets[i])
+
+            existing_weight = sum(a.weight for a in assets)
             if existing_weight + form.weight.data > 100:
                 flash('Total portfolio weight cannot exceed 100%. Current total: {:.1f}%'.format(existing_weight), 'error')
                 return render_template('add_asset.html', form=form)
             
             asset = Asset(
-                user_id=current_user.id,
+                user_id=current_user._id,
                 symbol=form.symbol.data.upper(),
                 name=form.name.data,
                 asset_type=form.asset_type.data,
@@ -855,8 +868,7 @@ def register_routes(app, mongoClient):
                 weight=form.weight.data,
                 risk_level=form.risk_level.data
             )
-            db.session.add(asset)
-            db.session.commit()
+            mongoClient.getConnectionEndpoint('Asset').insert_one(vars(asset))
             flash('Asset added successfully!', 'success')
             return redirect(url_for('asset_allocation'))
         
@@ -899,8 +911,12 @@ def register_routes(app, mongoClient):
     @app.route('/portfolio/allocation/edit/<asset_id>', methods=['GET', 'POST'])
     @login_required
     def edit_asset(asset_id):
-        asset = Asset.query.get_or_404(asset_id)
-        if asset.user_id != current_user.id:
+        asset_doc = mongoClient.getCollectionEndpoint('Asset').find_one({"_id": ObjectId(asset_id)})
+        if not asset_doc:
+            abort(404)
+        asset = deserializeDoc.asset(asset_doc)
+
+        if asset.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('asset_allocation'))
         
@@ -920,7 +936,12 @@ def register_routes(app, mongoClient):
                 )
             
             # Check weight constraints
-            existing_weight = sum(a.weight for a in Asset.query.filter_by(user_id=current_user.id).all() if a.id != asset_id)
+            assets = list(mongoClient.getConnectionEndpoint('Asset').find({"user_id":current_user._id}))
+            for i in range(len(assets)):
+                assets[i] = deserializeDoc.asset(assets[i])
+
+            existing_weight = sum(a.weight for a in assets)
+
             if existing_weight + form.weight.data > 100:
                 flash('Total portfolio weight cannot exceed 100%. Current total: {:.1f}%'.format(existing_weight), 'error')
                 return render_template('edit_asset.html', form=form, asset=asset)
@@ -931,7 +952,7 @@ def register_routes(app, mongoClient):
             asset.expected_return = form.expected_return.data
             asset.weight = form.weight.data
             asset.risk_level = form.risk_level.data
-            asset.updated_at = datetime.utcnow()
+            asset.updated_at = datetime.now()
             
             db.session.commit()
             flash('Asset updated successfully!', 'success')
@@ -950,13 +971,16 @@ def register_routes(app, mongoClient):
     @app.route('/portfolio/allocation/delete/<asset_id>', methods=['POST'])
     @login_required
     def delete_asset(asset_id):
-        asset = Asset.query.get_or_404(asset_id)
-        if asset.user_id != current_user.id:
+        asset_doc = mongoClient.getCollectionEndpoint('Asset').find_one({"_id": ObjectId(asset_id)})
+        if not asset_doc:
+            abort(404)
+        asset = deserializeDoc.asset(asset_doc)
+
+        if asset.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('asset_allocation'))
         
-        db.session.delete(asset)
-        db.session.commit()
+        mongoClient.getConnectionEndpoint('Asset').delete_one({"_id" : ObjectId(asset_id)})
         flash('Asset deleted successfully!', 'success')
         return redirect(url_for('asset_allocation'))
 
@@ -965,7 +989,7 @@ def register_routes(app, mongoClient):
     @login_required
     def retirement_plans():
         """Manage retirement plans"""
-        plans = RetirementPlan.query.filter_by(user_id=current_user.id).all()
+        plans = RetirementPlan.query.filter_by(user_id=current_user._id).all()
         return render_template('retirement_plans.html', plans=plans)
 
     @app.route('/portfolio/retirement/plans/add', methods=['GET', 'POST'])
@@ -974,7 +998,7 @@ def register_routes(app, mongoClient):
         form = RetirementPlanForm()
         if form.validate_on_submit():
             plan = RetirementPlan(
-                user_id=current_user.id,
+                user_id=current_user._id,
                 name=form.name.data,
                 target_amount=form.target_amount.data,
                 years_to_retirement=form.years_to_retirement.data,
@@ -982,8 +1006,7 @@ def register_routes(app, mongoClient):
                 monthly_contribution_needed=form.monthly_contribution.data,
                 projected_amount=0  # Will be calculated based on current savings and returns
             )
-            db.session.add(plan)
-            db.session.commit()
+            mongoClient.getConnectionEndpoint('RetirementPlan').insert_one(vars(plan))
             flash('Retirement plan added successfully!', 'success')
             return redirect(url_for('retirement_plans'))
         
@@ -992,13 +1015,16 @@ def register_routes(app, mongoClient):
     @app.route('/portfolio/retirement/plans/delete/<plan_id>', methods=['POST'])
     @login_required
     def delete_retirement_plan(plan_id):
-        plan = RetirementPlan.query.get_or_404(plan_id)
-        if plan.user_id != current_user.id:
+        plan_doc = mongoClient.getCollectionEndpoint('RetirementPlan').find_one({"_id": ObjectId(plan_id)})
+        if not plan_doc:
+            abort(404)
+        plan = deserializeDoc.retirement_plan(plan_doc)
+
+        if plan.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('retirement_plans'))
         
-        db.session.delete(plan)
-        db.session.commit()
+        mongoClient.getConnectionEndpoint('RetirementPlan').delete_one({"_id" : ObjectId(plan_id)})
         flash('Retirement plan deleted successfully!', 'success')
         return redirect(url_for('retirement_plans'))
 
@@ -1011,9 +1037,9 @@ def register_routes(app, mongoClient):
         
         if form.validate_on_submit():
             # Create or update retirement profile
-            profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+            profile = UserProfile.query.filter_by(user_id=current_user._id).first()
             if not profile:
-                profile = UserProfile(user_id=current_user.id)
+                profile = UserProfile(user_id=current_user._id)
                 db.session.add(profile)
             
             # Auto-calculate retirement parameters based on industry standards
@@ -1070,7 +1096,7 @@ def register_routes(app, mongoClient):
             
             # Create automated retirement plan
             plan = RetirementPlan(
-                user_id=current_user.id,
+                user_id=current_user._id,
                 name=f"Automated {risk_tolerance} Plan",
                 target_amount=target_amount,
                 years_to_retirement=years_to_retirement,
@@ -1242,10 +1268,10 @@ def register_routes(app, mongoClient):
     def summarize_user_financial_context():
         """Summarize the user's current financial situation for AI context"""
         # Get user's data
-        budgets = Budget.query.filter_by(user_id=current_user.id).all()
-        expenses = Expense.query.filter_by(user_id=current_user.id).all()
-        investments = Investment.query.filter_by(user_id=current_user.id).all()
-        goals = Goal.query.filter_by(user_id=current_user.id).all()
+        budgets = Budget.query.filter_by(user_id=current_user._id).all()
+        expenses = Expense.query.filter_by(user_id=current_user._id).all()
+        investments = Investment.query.filter_by(user_id=current_user._id).all()
+        goals = Goal.query.filter_by(user_id=current_user.id)._all()
         
         # Calculate totals
         total_budget = sum(b.limit_amount for b in budgets)
@@ -1506,7 +1532,7 @@ def register_routes(app, mongoClient):
         form = BudgetForm()
         if form.validate_on_submit():
             budget = Budget(
-                user_id=current_user.id,
+                user_id=current_user._id,
                 category=form.category.data,
                 limit_amount=form.limit_amount.data,
                 month=form.month.data,
@@ -1517,14 +1543,18 @@ def register_routes(app, mongoClient):
             flash('Budget added successfully!', 'success')
             return redirect(url_for('budget'))
         
-        budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        budgets = Budget.query.filter_by(user_id=current_user._id).all()
         return render_template('budget.html', form=form, budgets=budgets)
 
     @app.route('/edit_budget/<budget_id>', methods=['GET', 'POST'])
     @login_required
     def edit_budget(budget_id):
-        budget = Budget.query.get_or_404(budget_id)
-        if budget.user_id != current_user.id:
+        budget_doc = mongoClient.getCollectionEndpoint('Budget').find_one({"_id": ObjectId(budget_id)})
+        if not budget_doc:
+            abort(404)
+        budget = deserializeDoc.budget(budget_doc)
+
+        if budget.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('budget'))
         
@@ -1548,13 +1578,16 @@ def register_routes(app, mongoClient):
     @app.route('/delete_budget/<budget_id>', methods=['POST'])
     @login_required
     def delete_budget(budget_id):
-        budget = Budget.query.get_or_404(budget_id)
-        if budget.user_id != current_user.id:
+        budget_doc = mongoClient.getCollectionEndpoint('Budget').find_one({"_id": ObjectId(budget_id)})
+        if not budget_doc:
+            abort(404)
+        budget = deserializeDoc.budget(budget_doc)
+
+        if budget.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('budget'))
         
-        db.session.delete(budget)
-        db.session.commit()
+        mongoClient.getConnectionEndpoint('Budget').delete_one({"_id" : ObjectId(budget_id)})
         flash('Budget deleted successfully!', 'success')
         return redirect(url_for('budget'))
 
@@ -1564,7 +1597,7 @@ def register_routes(app, mongoClient):
         form = ExpenseForm()
         
         # Get categories from existing budgets
-        budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        budgets = Budget.query.filter_by(user_id=current_user._id).all()
         categories = [budget.category for budget in budgets]
         form.category.choices = [(cat, cat) for cat in categories]
         
@@ -1576,7 +1609,7 @@ def register_routes(app, mongoClient):
                 amount_usd = form.amount.data * rate
             
             expense = Expense(
-                user_id=current_user.id,
+                user_id=current_user._id,
                 amount=form.amount.data,
                 category=form.category.data,
                 description=form.description.data,
@@ -1589,21 +1622,25 @@ def register_routes(app, mongoClient):
             flash('Expense added successfully!', 'success')
             return redirect(url_for('expenses'))
         
-        expenses = Expense.query.filter_by(user_id=current_user.id).order_by(Expense.date.desc()).all()
+        expenses = Expense.query.filter_by(user_id=current_user._id).order_by(Expense.date.desc()).all()
         return render_template('expenses.html', form=form, expenses=expenses)
 
     @app.route('/edit_expense/<expense_id>', methods=['GET', 'POST'])
     @login_required
     def edit_expense(expense_id):
-        expense = Expense.query.get_or_404(expense_id)
-        if expense.user_id != current_user.id:
+        expense_doc = mongoClient.getCollectionEndpoint('Expense').find_one({"_id": ObjectId(expense_id)})
+        if not expense_doc:
+            abort(404)
+        expense = deserializeDoc.expense(expense_doc)
+
+        if expense.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('expenses'))
         
         form = ExpenseForm()
         
         # Get categories from existing budgets
-        budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        budgets = Budget.query.filter_by(user_id=current_user._id).all()
         categories = [budget.category for budget in budgets]
         form.category.choices = [(cat, cat) for cat in categories]
         
@@ -1636,20 +1673,23 @@ def register_routes(app, mongoClient):
     @app.route('/delete_expense/<expense_id>', methods=['POST'])
     @login_required
     def delete_expense(expense_id):
-        expense = Expense.query.get_or_404(expense_id)
-        if expense.user_id != current_user.id:
+        expense_doc = mongoClient.getCollectionEndpoint('Expense').find_one({"_id": ObjectId(expense_id)})
+        if not expense_doc:
+            abort(404)
+        expense = deserializeDoc.expense(expense_doc)
+
+        if expense.user_id != current_user._id:
             flash('Access denied.', 'error')
             return redirect(url_for('expenses'))
         
-        db.session.delete(expense)
-        db.session.commit()
+        mongoClient.getConnectionEndpoint('Expense').delete_one({"_id" : ObjectId(expense_id)})
         flash('Expense deleted successfully!', 'success')
         return redirect(url_for('expenses'))
 
     @app.route('/goals')
     @login_required
     def goals():
-        goals = Goal.query.filter_by(user_id=current_user.id).all()
+        goals = Goal.query.filter_by(user_id=current_user._id).all()
         return render_template('goals.html', goals=goals)
 
     @app.route('/goals/add', methods=['GET', 'POST'])
@@ -1658,14 +1698,13 @@ def register_routes(app, mongoClient):
         form = GoalForm()
         if form.validate_on_submit():
             goal = Goal(
-                user_id=current_user.id,
+                user_id=current_user._id,
                 name=form.name.data,
                 target_amount=form.target_amount.data,
                 current_amount=form.current_amount.data,
                 target_date=form.target_date.data
             )
-            db.session.add(goal)
-            db.session.commit()
+            mongoClient.getConnectionEndpoint('Goal').insert_one(vars(goal))
             flash('Goal added successfully!', 'success')
             return redirect(url_for('goals'))
         
@@ -1674,7 +1713,7 @@ def register_routes(app, mongoClient):
     @app.route('/goals/edit/<goal_id>', methods=['GET', 'POST'])
     @login_required
     def edit_goal(goal_id):
-        goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": goal_id})
+        goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": ObjectId(goal_id)})
         if not goal_doc:
             abort(404)
         goal = deserializeDoc.goal(goal_doc)
@@ -1691,7 +1730,7 @@ def register_routes(app, mongoClient):
             goal.target_date = form.target_date.data
             
             mongoClient.getCollectionEndpoint('Goal').update_one(
-                {"_id": goal_id},
+                {"_id": ObjectId(goal_id)},
                 {"$set": {
                     "name": goal.name,
                     "target_amount": goal.target_amount,
@@ -1712,7 +1751,7 @@ def register_routes(app, mongoClient):
     @app.route('/goals/delete/<goal_id>', methods=['POST'])
     @login_required
     def delete_goal(goal_id):
-        goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": goal_id})
+        goal_doc = mongoClient.getCollectionEndpoint('Goal').find_one({"_id": ObjectId(goal_id)})
         if not goal_doc:
             abort(404)
         goal = deserializeDoc.goal(goal_doc)
@@ -1720,7 +1759,7 @@ def register_routes(app, mongoClient):
             flash('Access denied.', 'error')
             return redirect(url_for('goals'))
         
-        mongoClient.getConnectionEndpoint('Goal').delete_one({"_id" : goal_id})
+        mongoClient.getConnectionEndpoint('Goal').delete_one({"_id" : ObjectId(goal_id)})
         flash('Goal deleted successfully!', 'success')
         return redirect(url_for('goals'))
 
@@ -1948,7 +1987,7 @@ def register_routes(app, mongoClient):
                 if name and percent:
                     limit = float(income) * float(percent) / 100.0
                     budget = Budget(
-                        user_id=user.id,
+                        user_id=user._id,
                         category=name,
                         limit_amount=limit,
                         month=datetime.now().strftime('%B'),
@@ -1969,7 +2008,7 @@ def register_routes(app, mongoClient):
                             target_date = None
                     
                     goal = Goal(
-                        user_id=user.id,
+                        user_id=user._id,
                         name=name,
                         target_amount=float(target),
                         current_amount=0,
