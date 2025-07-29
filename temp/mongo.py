@@ -3,9 +3,6 @@ from pymongo.server_api import ServerApi
 
 from mongodb_operations import mongoDBClient
 
-uri = "mongodb+srv://cevallos:ClkHACNIz9owdn0o@cashline.hhboxjv.mongodb.net/?retryWrites=true&w=majority&appName=cashline"
-
-
 client = mongoDBClient(uri)
 
 try:
