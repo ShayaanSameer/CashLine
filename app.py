@@ -10,10 +10,9 @@ import re
 from bson import ObjectId
 
 from config import config
-# from models import db, User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
 from forms import LoginForm, RegistrationForm, BudgetForm, ExpenseForm, InvestmentForm, GoalForm, UserProfileForm, AssetForm, RetirementPlanForm, AutomatedRetirementForm, RetirementProfileForm, RetirementCalculatorForm
-import time
-from mongoModels import Investment#, User, Budget, Expense, Goal, UserProfile, Asset, RetirementPlan
+
+from mongoModels import Investment, User, Budget, Expense, Goal, UserProfile, Asset, RetirementPlan
 from mongodb_operations import mongoDBClient, deserializeDoc
 
 # Load environment variables
@@ -1004,7 +1003,7 @@ def register_routes(app, mongoClient):
         plans = mongoClient.getCollectionEndpoint("RetirementPlan").find({"user_id":current_user._id})
         for i in range(len(plans)):
             plans[i] = deserializeDoc.retirement_plan(plans[i])
-            
+
         return render_template('retirement_plans.html', plans=plans)
 
     @app.route('/portfolio/retirement/plans/add', methods=['GET', 'POST'])
@@ -1052,10 +1051,11 @@ def register_routes(app, mongoClient):
         
         if form.validate_on_submit():
             # Create or update retirement profile
-            profile = UserProfile.query.filter_by(user_id=current_user._id).first()
+            profile_doc = mongoClient.getCollectionEndpoint('UserProfile').find_one()
+            profile = deserializeDoc.user_profile(profile_doc)
             if not profile:
                 profile = UserProfile(user_id=current_user._id)
-                db.session.add(profile)
+                mongoClient.getCollectionEndpoint('UserProfile').insert_one(vars(profile))
             
             # Auto-calculate retirement parameters based on industry standards
             current_age = form.current_age.data
@@ -1108,6 +1108,17 @@ def register_routes(app, mongoClient):
             profile.current_salary = current_income
             profile.expected_retirement_income = target_income
             profile.current_savings = current_savings
+
+            mongoClient.getCollectionEndpoint('UserProfile').update_one(
+                {"_id" : profile._id},
+                {"$set": {
+                    'age' : profile.age,
+                    'retirement_age' : profile.retirement_age,
+                    'current_salary' : profile.current_salary,
+                    'expected_retirement_income' : profile.expected_retirement_income,
+                    'current_savings' : profile.current_savings,
+                }}
+            )
             
             # Create automated retirement plan
             plan = RetirementPlan(
@@ -1120,9 +1131,8 @@ def register_routes(app, mongoClient):
                 projected_amount=current_savings * (1 + expected_return/100)**years_to_retirement
             )
             
-            db.session.add(plan)
-            db.session.commit()
-            
+            mongoClient.getCollectionEndpoint('RetirementPlan').insert_one(vars(plan))
+
             flash(f'Automated retirement plan created! Target: ${target_amount:,.0f}, Monthly savings: ${monthly_savings:,.0f}', 'success')
             return redirect(url_for('retirement_planning'))
         
@@ -1283,10 +1293,22 @@ def register_routes(app, mongoClient):
     def summarize_user_financial_context():
         """Summarize the user's current financial situation for AI context"""
         # Get user's data
-        budgets = Budget.query.filter_by(user_id=current_user._id).all()
-        expenses = Expense.query.filter_by(user_id=current_user._id).all()
-        investments = Investment.query.filter_by(user_id=current_user._id).all()
-        goals = Goal.query.filter_by(user_id=current_user.id)._all()
+        budgets = list(mongoClient.getCollectionEndpoint('Budget').find({"user_id":current_user._id}))
+        for i in range(0, len(budgets)):
+            budgets[i] = deserializeDoc.budget(budgets[i])
+        # budgets = Budget.query.filter_by(user_id=current_user.id).all()
+        expenses = list(mongoClient.getCollectionEndpoint('Expense').find({"user_id":current_user._id}))
+        for i in range(0, len(budgets)):
+            expenses[i] = deserializeDoc.expense(expenses[i])
+        # expenses = Expense.query.filter_by(user_id=current_user.id).all()
+        investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":current_user._id}))
+        for i in range(0, len(investments)):
+            investments[i] = deserializeDoc.investment(investments[i])
+        # investments = Investment.query.filter_by(user_id=current_user.id).all()
+        goals = list(mongoClient.getCollectionEndpoint('Goal').find({"user_id":current_user._id}))
+        for i in range(0, len(goals)):
+            goals[i] = deserializeDoc.goal(goals[i])
+        # goals = Goal.query.filter_by(user_id=current_user.id).all()
         
         # Calculate totals
         total_budget = sum(b.limit_amount for b in budgets)
@@ -1362,7 +1384,6 @@ def register_routes(app, mongoClient):
         goals = list(mongoClient.getCollectionEndpoint('Goal').find({"user_id":current_user._id}))
         for i in range(0, len(goals)):
             goals[i] = deserializeDoc.goal(goals[i])
-        
         # goals = Goal.query.filter_by(user_id=current_user.id).all()
         
         print(f"DEBUG: Dashboard - User {current_user._id} has {len(budgets)} budgets, {len(expenses)} expenses, {len(investments)} investments, {len(goals)} goals")
@@ -1553,12 +1574,15 @@ def register_routes(app, mongoClient):
                 month=form.month.data,
                 year=int(form.year.data)
             )
-            db.session.add(budget)
-            db.session.commit()
+            mongoClient.getCollectionEndpoint('Budget').insert_one(vars(budget))
+
             flash('Budget added successfully!', 'success')
             return redirect(url_for('budget'))
         
-        budgets = Budget.query.filter_by(user_id=current_user._id).all()
+        budgets = list(mongoClient.getCollectionEndpoint('Budget').find({"user_id" : current_user._id}))
+        for i in range(len(budgets)):
+            budgets[i] = deserializeDoc.budget(budgets[i])
+
         return render_template('budget.html', form=form, budgets=budgets)
 
     @app.route('/edit_budget/<budget_id>', methods=['GET', 'POST'])
@@ -1579,7 +1603,17 @@ def register_routes(app, mongoClient):
             budget.limit_amount = form.limit_amount.data
             budget.month = form.month.data
             budget.year = int(form.year.data)
-            db.session.commit()
+            
+            mongoClient.getCollectionEndpoint('Budget').update_one(
+                { "_id" : ObjectId(budget_id) },
+                { "$set" : {
+                    "category" : budget.category,
+                    "limit_amount" : budget.limit_amount,
+                    "month" : budget.month,
+                    "year" : budget.year,
+                }}
+            )
+
             flash('Budget updated successfully!', 'success')
             return redirect(url_for('budget'))
         elif request.method == 'GET':

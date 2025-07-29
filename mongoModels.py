@@ -26,7 +26,7 @@ class User(UserMixin):
         return str(self._id)
     
 class UserProfile():
-    def __init__(self, user_id, age, ra, cs, eri, csave, mc, rt, created_at=datetime.now(), updated_at=datetime.now(), _id=ObjectId()):
+    def __init__(self, user_id, age=None, ra=None, cs=None, eri=None, csave=None, mc=None, rt=None, created_at=datetime.now(), updated_at=datetime.now(), _id=ObjectId()):
         self._id=_id
         self.user_id = user_id
         self.age = age
