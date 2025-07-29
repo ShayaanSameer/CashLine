@@ -92,8 +92,8 @@
                                 <td>{{ investment.purchase_date.strftime('%Y-%m-%d') }}</td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ url_for('edit_investment', investment_id=investment._id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteInvestment({{ investment._id }})">Delete</button>
+                                        <a href="{{ url_for('edit_investment', investment_id=investment.getid()) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteInvestment({{ investment.getid() }})">Delete</button>
                                     </div>
                                 </td>
                             </tr>

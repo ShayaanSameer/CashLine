@@ -39,6 +39,9 @@ class UserProfile():
         self.created_at = created_at
         self.updated_at = updated_at
 
+    def get_id(self):
+        return str(self._id)
+
 class Asset():
     def __init__(self, user_id, symbol, name, asset_type, expected_return, weight, risk_level, created_at=datetime.now(), updated_at=datetime.now(), _id=ObjectId()):
         self._id = _id
@@ -51,6 +54,9 @@ class Asset():
         self.risk_level = risk_level
         self.created_at = created_at
         self.updated = updated_at
+
+    def get_id(self):
+        return str(self._id)
 
 class RetirementPlan():
     def __init__(self, user_id, name, target_amount, ytr, err, mcn, pa, c_at=datetime.now(), u_at=datetime.now(), _id=ObjectId()):
@@ -65,6 +71,9 @@ class RetirementPlan():
         self.created_at = c_at
         self.updated_at = u_at
 
+    def get_id(self):
+        return str(self._id)
+
 class Budget():
     def __init__(self, user_id, category, limit_amount, month, year, created_at=datetime.now(), _id=ObjectId()):
         self._id = _id
@@ -74,6 +83,9 @@ class Budget():
         self.month = month
         self.year = year
         self.created_at = created_at
+
+    def get_id(self):
+        return str(self._id)
 
 class Expense():
     def __init__(self, user_id, amount, category, description, date, currency, converted_amount_usd, created_at=datetime.now(), _id=ObjectId()):
@@ -87,6 +99,9 @@ class Expense():
         self.converted_amount_usd = converted_amount_usd
         self.created_at = created_at
 
+    def get_id(self):
+        return str(self._id)
+
 class Investment():
     def __init__(self, user_id, symbol, shares, purchase_price, purchase_date, updated_at=datetime.now(), created_at=datetime.now(), _id=ObjectId()):
         self._id = _id
@@ -98,6 +113,9 @@ class Investment():
         self.created_at = created_at
         self.updated_at = updated_at
 
+    def get_id(self):
+        return str(self._id)
+
 class Goal():
     def __init__(self, user_id, name, target_amount, current_amount, target_date, created_at=datetime.now(), _id=ObjectId()):
         self._id = _id
@@ -107,3 +125,6 @@ class Goal():
         self.current_amount = current_amount
         self.target_date = target_date
         self.created_at = created_at
+
+    def get_id(self):
+        return str(self._id)
