@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from datetime import datetime
 
-class MongoUser(UserMixin):
+class User(UserMixin):
     def __init__(self, 
                  id = ObjectId(),
                  username = None,
