@@ -1312,7 +1312,7 @@ def register_routes(app, mongoClient):
             budgets[i] = deserializeDoc.budget(budgets[i])
         # budgets = Budget.query.filter_by(user_id=current_user.id).all()
         expenses = list(mongoClient.getCollectionEndpoint('Expense').find({"user_id":current_user._id}))
-        for i in range(0, len(budgets)):
+        for i in range(0, len(expenses)):
             expenses[i] = deserializeDoc.expense(expenses[i])
         # expenses = Expense.query.filter_by(user_id=current_user.id).all()
         investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":current_user._id}))
@@ -1868,7 +1868,7 @@ def register_routes(app, mongoClient):
                     budget_context = summarize_user_financial_context()
                     
                     # Use Gemini API for financial advice
-                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
                     headers = {
                         "Content-Type": "application/json",
                         "x-goog-api-key": GEMINI_API_KEY
@@ -1894,14 +1894,22 @@ def register_routes(app, mongoClient):
                         headers=headers,
                         json=data
                     )
+
+                    print(response.json())
                     
                     if response.status_code == 200:
                         result = response.json()
-                        advice = result['candidates'][0]['content']['parts'][0]['text']
+                        print(result)
+                        candidates = result.get("candidates", [])
+                        if candidates and "content" in candidates[0] and "parts" in candidates[0]["content"]:
+                            parts = candidates[0]["content"]["parts"]
+                            if parts and "text" in parts[0]:
+                                advice = parts[0]["text"]
+                            else:
+                                advice = "No advice text returned from Gemini."
+                        else:
+                            advice = "No candidates returned from Gemini."
                         return render_template('advice.html', advice=advice, question=question)
-                    else:
-                        error = f"Error: {response.status_code}"
-                        return render_template('advice.html', error=error, question=question)
                     
                 except Exception as e:
                     error = f"Error connecting to Gemini API: {e}"
@@ -1924,7 +1932,7 @@ def register_routes(app, mongoClient):
             budget_context = summarize_user_financial_context()
             
             # Use Gemini API for financial advice
-            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
             headers = {
                 "Content-Type": "application/json",
                 "x-goog-api-key": GEMINI_API_KEY
@@ -1953,10 +1961,17 @@ def register_routes(app, mongoClient):
             
             if response.status_code == 200:
                 result = response.json()
-                ai_response = result['candidates'][0]['content']['parts'][0]['text']
+                print(result)
+                candidates = result.get("candidates", [])
+                if candidates and "content" in candidates[0] and "parts" in candidates[0]["content"]:
+                    parts = candidates[0]["content"]["parts"]
+                    if parts and "text" in parts[0]:
+                        ai_response = parts[0]["text"]
+                    else:
+                        ai_response = "No response text returned."
+                else:
+                    ai_response = "No candidates returned from Gemini."
                 return jsonify({'ai_response': ai_response})
-            else:
-                return jsonify({'error': f'Gemini API error: {response.status_code}'}), 500
                 
         except Exception as e:
             return jsonify({'error': f'Error connecting to Gemini API: {e}'}), 500
