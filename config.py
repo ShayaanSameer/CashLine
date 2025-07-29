@@ -8,7 +8,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///budgeting.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-    URI = os.environ.get('URI')
+    MONGO_URI = os.environ.get('URI')
 
 class DevelopmentConfig(Config):
     DEBUG = True
