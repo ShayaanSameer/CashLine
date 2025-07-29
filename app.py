@@ -75,7 +75,7 @@ def register_routes(app, mongoClient):
             return 1.0
         try:
             # Get API key from environment or use free tier
-            api_key = os.environ.get('EXCHANGE_RATE_API_KEY')
+            api_key = app.config["EXCHANGE_RATE_API_KEY"]
             url = f"https://v6.exchangerate-api.com/v6/{api_key}/latest/{base}"
             resp = requests.get(url, timeout=5)
             data = resp.json()
@@ -87,7 +87,6 @@ def register_routes(app, mongoClient):
             return 1.0
     
     def search_stock_api(symbol):
-        """Search for stock information using multiple fallback options"""
         symbol = symbol.upper().strip()
         
         # Curated list of popular stocks as fallback
@@ -150,9 +149,8 @@ def register_routes(app, mongoClient):
         if matches:
             return matches
         
-        # Try Finnhub API (recommended - free tier with 60 calls/minute)
         try:
-            finnhub_key = os.environ.get('STOCK_API_KEY')
+            finnhub_key = app.config['FINNHUB_API_KEY']
             if finnhub_key:
                 url = f"https://finnhub.io/api/v1/search?q={symbol}&token={finnhub_key}"
                 response = requests.get(url, timeout=5)
@@ -171,55 +169,13 @@ def register_routes(app, mongoClient):
         except Exception as e:
             print(f"Finnhub API error: {e}")
         
-        # Try IEX Cloud API as second fallback
-        try:
-            iex_key = os.environ.get('IEX_API_KEY')
-            if iex_key:
-                url = f"https://cloud.iexapis.com/stable/search/{symbol}?token={iex_key}"
-                response = requests.get(url, timeout=5)
-                data = response.json()
-                
-                if data:
-                    api_matches = []
-                    for match in data[:5]:
-                        api_matches.append({
-                            'symbol': match.get('symbol', ''),
-                            'name': match.get('name', ''),
-                            'type': 'Stock',
-                            'region': 'US'
-                        })
-                    return api_matches
-        except Exception as e:
-            print(f"IEX API error: {e}")
-        
-        # Try Alpha Vantage API as final fallback
-        try:
-            alpha_key = os.environ.get('ALPHA_VANTAGE_API_KEY', 'demo')
-            url = f"https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={symbol}&apikey={alpha_key}"
-            response = requests.get(url, timeout=5)
-            data = response.json()
-            
-            if 'bestMatches' in data and data['bestMatches']:
-                api_matches = []
-                for match in data['bestMatches'][:5]:
-                    api_matches.append({
-                        'symbol': match['1. symbol'],
-                        'name': match['2. name'],
-                        'type': match['3. type'],
-                        'region': match['4. region']
-                    })
-                return api_matches
-        except Exception as e:
-            print(f"Alpha Vantage API error: {e}")
-        
-        # If no API results, return empty list
         return []
 
     def get_stock_price(symbol):
         """Get real-time stock price from Finnhub API with fallback to purchase price"""
         try:
-            finnhub_key = os.environ.get('STOCK_API_KEY')
-            if finnhub_key and finnhub_key != 'your-finnhub-api-key-here':
+            finnhub_key = app.config['FINNHUB_API_KEY']
+            if finnhub_key:
                 url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={finnhub_key}"
                 response = requests.get(url, timeout=5)
                 data = response.json()
@@ -245,8 +201,8 @@ def register_routes(app, mongoClient):
     def get_company_profile_from_finnhub(symbol):
         """Get company profile data from Finnhub API for better categorization"""
         try:
-            finnhub_key = os.environ.get('STOCK_API_KEY')
-            if finnhub_key and finnhub_key != 'your-finnhub-api-key-here':
+            finnhub_key = app.config['FINNHUB_API_KEY']
+            if finnhub_key:
                 # Get company profile
                 profile_url = f"https://finnhub.io/api/v1/stock/profile2?symbol={symbol}&token={finnhub_key}"
                 profile_response = requests.get(profile_url, timeout=5)
