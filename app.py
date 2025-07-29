@@ -12,7 +12,7 @@ from bson import ObjectId
 from config import config
 # from models import db, User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
 from forms import LoginForm, RegistrationForm, BudgetForm, ExpenseForm, InvestmentForm, GoalForm, UserProfileForm, AssetForm, RetirementPlanForm, AutomatedRetirementForm, RetirementProfileForm, RetirementCalculatorForm
-
+import time
 from mongoModels import Investment, User, Budget, Expense, Goal, UserProfile, Asset, RetirementPlan
 from mongodb_operations import mongoDBClient, deserializeDoc
 
@@ -629,7 +629,9 @@ def register_routes(app, mongoClient):
     def current_holdings():
         """Manage current investment holdings with real-time tracking"""
         investments = list(mongoClient.getCollectionEndpoint('Investment').find({"user_id":current_user._id}))
-        
+        for i in range(len(investments)):
+            investments[i] = deserializeDoc.investment(investments[i])
+
         # Calculate portfolio summary values
         total_purchase_value = 0
         total_current_value = 0
@@ -689,7 +691,7 @@ def register_routes(app, mongoClient):
                 symbol=form.symbol.data.upper(),
                 shares=form.shares.data,
                 purchase_price=form.purchase_price.data,
-                purchase_date=form.purchase_date.data
+                purchase_date=datetime.combine(form.purchase_date.data, datetime.min.time())
             )
             mongoClient.getCollectionEndpoint('Investment').insert_one(vars(investment))
             flash('Investment added successfully!', 'success')
