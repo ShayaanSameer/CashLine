@@ -195,8 +195,12 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="{{ url_for('edit_asset', asset_id=asset.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAsset({{ asset.id }})">Delete</button>
+                                                <a href="{{ url_for('edit_asset', asset_id=asset.getid()) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                                <form method="POST" action="{{ url_for('delete_asset', asset_id=asset.getid()) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')">
+                                                        <i class="fas fa-trash me-1"></i>Delete
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>

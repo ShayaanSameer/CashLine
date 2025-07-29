@@ -109,10 +109,10 @@
                                             <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
                                             <td>
                                                 <div class="d-flex gap-2">
-                                                    <a href="{{ url_for('edit_expense', expense_id=expense.id) }}" class="btn btn-outline-primary btn-sm">
+                                                    <a href="{{ url_for('edit_expense', expense_id=expense.getid()) }}" class="btn btn-outline-primary btn-sm">
                                                         <i class="fas fa-edit me-1"></i>Edit
                                                     </a>
-                                                    <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.id) }}" class="d-inline">
+                                                    <form method="POST" action="{{ url_for('delete_expense', expense_id=expense.getid()) }}" class="d-inline">
                                                         <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure?')">
                                                             <i class="fas fa-trash me-1"></i>Delete
                                                         </button>

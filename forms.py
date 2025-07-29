@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, FloatField, DateField, TextAreaField, SelectField, IntegerField, HiddenField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange, Optional
+from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange, Optional, InputRequired, NumberRange
 from models import User
+from mongodb_operations import mongoDBClient, deserializeDoc
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -15,14 +16,20 @@ class RegistrationForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Register')
     
+    def __init__(self, mongo_client, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mongo_client = mongo_client
+
     def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user:
+        user_doc = self.mongo_client.getCollectionEndpoint('User').find_one({'username':username.data})
+
+        if user_doc:
             raise ValidationError('Username already taken. Please choose a different one.')
     
     def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user:
+        user_doc = self.mongo_client.getCollectionEndpoint('User').find_one({'email':email.data})
+
+        if user_doc:
             raise ValidationError('Email already registered. Please use a different one.')
 
 class UserProfileForm(FlaskForm):
@@ -51,8 +58,8 @@ class AssetForm(FlaskForm):
         ('Commodity', 'Commodity'),
         ('Other', 'Other')
     ], validators=[DataRequired()])
-    expected_return = FloatField('Expected Annual Return (%)', validators=[DataRequired(), NumberRange(min=0, max=50)])
-    weight = FloatField('Portfolio Weight (%)', validators=[DataRequired(), NumberRange(min=0, max=100)])
+    expected_return = FloatField('Expected Annual Return (%)', validators=[InputRequired(), NumberRange(min=0, max=50)])
+    weight = FloatField('Portfolio Weight (%)', validators=[InputRequired(), NumberRange(min=0, max=100)])
     risk_level = SelectField('Risk Level', choices=[
         ('Low', 'Low'),
         ('Medium', 'Medium'),
@@ -63,9 +70,9 @@ class AssetForm(FlaskForm):
 class RetirementPlanForm(FlaskForm):
     name = StringField('Plan Name', validators=[DataRequired(), Length(max=100)])
     target_amount = FloatField('Target Retirement Amount', validators=[DataRequired(), NumberRange(min=0)])
-    years_to_retirement = IntegerField('Years to Retirement', validators=[DataRequired(), NumberRange(min=1, max=50)])
+    years_to_retirement = IntegerField('Years to Retirement', validators=[DataRequired(), NumberRange(min=1, max=60)])
     expected_return_rate = FloatField('Expected Annual Return Rate (%)', validators=[DataRequired(), NumberRange(min=0, max=20)])
-    monthly_contribution = FloatField('Monthly Contribution', validators=[DataRequired(), NumberRange(min=0)])
+    # monthly_contribution = FloatField('Monthly Contribution', validators=[InputRequired(), NumberRange(min=0)])
     submit = SubmitField('Add Plan')
 
 class BudgetForm(FlaskForm):
@@ -93,7 +100,7 @@ class ExpenseForm(FlaskForm):
 
 class InvestmentForm(FlaskForm):
     symbol = StringField('Stock Symbol', validators=[DataRequired()])
-    shares = FloatField('Number of Shares', validators=[DataRequired()])
+    shares = FloatField('Number of Shares', validators=[DataRequired(), NumberRange(min=0)])
     purchase_price = FloatField('Purchase Price', validators=[DataRequired()])
     purchase_date = DateField('Purchase Date', validators=[DataRequired()])
     submit = SubmitField('Add Investment')
@@ -101,7 +108,7 @@ class InvestmentForm(FlaskForm):
 class GoalForm(FlaskForm):
     name = StringField('Goal Name', validators=[DataRequired()])
     target_amount = FloatField('Target Amount', validators=[DataRequired()])
-    current_amount = FloatField('Current Amount', validators=[DataRequired()])
+    current_amount = FloatField('Current Amount', validators=[InputRequired(), NumberRange(min=0)])
     target_date = DateField('Target Date', validators=[DataRequired()])
     submit = SubmitField('Add Goal') 
 
@@ -109,7 +116,7 @@ class AutomatedRetirementForm(FlaskForm):
     # Basic Info (User provides)
     current_age = IntegerField('Your Age', validators=[DataRequired(), NumberRange(min=18, max=100)])
     current_income = FloatField('Current Annual Income', validators=[DataRequired(), NumberRange(min=0)])
-    current_savings = FloatField('Current Retirement Savings', validators=[DataRequired(), NumberRange(min=0)])
+    current_savings = FloatField('Current Retirement Savings', validators=[InputRequired(), NumberRange(min=0)])
     
     # Risk tolerance for auto-calculation
     risk_tolerance = SelectField('Risk Tolerance', choices=[
@@ -123,14 +130,14 @@ class AutomatedRetirementForm(FlaskForm):
 class RetirementProfileForm(FlaskForm):
     current_age = IntegerField('Current Age', validators=[DataRequired(), NumberRange(min=18, max=100)])
     retirement_age = IntegerField('Retirement Age', validators=[DataRequired(), NumberRange(min=50, max=80)])
-    current_income = FloatField('Current Annual Income', validators=[DataRequired(), NumberRange(min=0)])
+    current_income = FloatField('Current Annual Income', validators=[DataRequired(), NumberRange(min=1)])
     expected_retirement_income = FloatField('Expected Annual Retirement Income', validators=[DataRequired(), NumberRange(min=0)])
-    current_savings = FloatField('Current Retirement Savings', validators=[DataRequired(), NumberRange(min=0)])
+    current_savings = FloatField('Current Retirement Savings', validators=[InputRequired(), NumberRange(min=0)])
     submit = SubmitField('Save Profile')
 
 class RetirementCalculatorForm(FlaskForm):
     target_amount = FloatField('Target Retirement Amount', validators=[DataRequired(), NumberRange(min=0)])
-    current_savings = FloatField('Current Savings', validators=[DataRequired(), NumberRange(min=0)])
+    current_savings = FloatField('Current Savings', validators=[InputRequired(), NumberRange(min=0)])
     years_to_retirement = IntegerField('Years to Retirement', validators=[DataRequired(), NumberRange(min=1, max=100)])
-    expected_return = FloatField('Expected Annual Return (%)', validators=[DataRequired(), NumberRange(min=0, max=20)])
+    expected_return = FloatField('Expected Annual Return (%)', validators=[InputRequired(), NumberRange(min=0, max=20)])
     submit = SubmitField('Calculate Scenarios') 
