@@ -720,7 +720,7 @@ def register_routes(app, mongoClient):
             investment.updated_at = datetime.now()
             
             mongoClient.getCollectionEndpoint('Investment').update_one(
-                {"_id": investment_id},
+                {"_id": ObjectId(investment_id)},
                 {"$set": {
                     "symbol": investment.symbol,
                     "shares": investment.shares,
@@ -953,8 +953,20 @@ def register_routes(app, mongoClient):
             asset.weight = form.weight.data
             asset.risk_level = form.risk_level.data
             asset.updated_at = datetime.now()
+
+            mongoClient.getCollectionEndpoint('Asset').update_one(
+                {"_id":ObjectId(asset_id)},
+                {"$set": {
+                    "symbol" : asset.symbol,
+                    "name" : asset.name,
+                    "asset_type" : asset.asset_type,
+                    "expected_return" : asset.expected_return,
+                    "weight" : asset.weight,
+                    "risk_level" : asset.risk_level,
+                    "updated_at" : asset.updated_at
+                }}
+            )
             
-            db.session.commit()
             flash('Asset updated successfully!', 'success')
             return redirect(url_for('asset_allocation'))
         
@@ -989,7 +1001,10 @@ def register_routes(app, mongoClient):
     @login_required
     def retirement_plans():
         """Manage retirement plans"""
-        plans = RetirementPlan.query.filter_by(user_id=current_user._id).all()
+        plans = mongoClient.getCollectionEndpoint("RetirementPlan").find({"user_id":current_user._id})
+        for i in range(len(plans)):
+            plans[i] = deserializeDoc.retirement_plan(plans[i])
+            
         return render_template('retirement_plans.html', plans=plans)
 
     @app.route('/portfolio/retirement/plans/add', methods=['GET', 'POST'])
@@ -1597,7 +1612,10 @@ def register_routes(app, mongoClient):
         form = ExpenseForm()
         
         # Get categories from existing budgets
-        budgets = Budget.query.filter_by(user_id=current_user._id).all()
+        budgets = list(mongoClient.getConnectionEndpoint('Budget').find({"user_id":current_user._id}))
+        for i in range(len(budgets)):
+            budgets[i] = deserializeDoc.budget(budgets[i])
+
         categories = [budget.category for budget in budgets]
         form.category.choices = [(cat, cat) for cat in categories]
         
@@ -1617,12 +1635,15 @@ def register_routes(app, mongoClient):
                 currency=form.currency.data,
                 converted_amount_usd=amount_usd
             )
-            db.session.add(expense)
-            db.session.commit()
+            mongoClient.getCollectionEndpoint('Expense').insert_one(vars(expense))
             flash('Expense added successfully!', 'success')
             return redirect(url_for('expenses'))
         
-        expenses = Expense.query.filter_by(user_id=current_user._id).order_by(Expense.date.desc()).all()
+
+        expenses = list(mongoClient.getCollectionEndpoint('Expense').find({"user_id":current_user._id}).sort({"date" : -1}))
+        for i in range(len(expenses)):
+            expenses[i] = deserializeDoc.expense(expenses[i])
+
         return render_template('expenses.html', form=form, expenses=expenses)
 
     @app.route('/edit_expense/<expense_id>', methods=['GET', 'POST'])
@@ -1640,7 +1661,10 @@ def register_routes(app, mongoClient):
         form = ExpenseForm()
         
         # Get categories from existing budgets
-        budgets = Budget.query.filter_by(user_id=current_user._id).all()
+        budgets = list(mongoClient.getConnectionEndpoint('Budget').find({"user_id":current_user._id}))
+        for i in range(len(budgets)):
+            budgets[i] = deserializeDoc.budget(budgets[i])
+
         categories = [budget.category for budget in budgets]
         form.category.choices = [(cat, cat) for cat in categories]
         
@@ -1658,7 +1682,17 @@ def register_routes(app, mongoClient):
             expense.currency = form.currency.data
             expense.converted_amount_usd = amount_usd
             
-            db.session.commit()
+            mongoClient.getCollectionEndpoint('Expense').update_one(
+                {"_id": ObjectId(expense_id)},
+                {"$set": {
+                    "amount":expense.amount,
+                    "category":expense.category,
+                    "description":expense.description,
+                    "date":expense.date,
+                    "currency":expense.currency,
+                    "converted_amount_usd":expense.converted_amount_usd
+                }})
+
             flash('Expense updated successfully!', 'success')
             return redirect(url_for('expenses'))
         elif request.method == 'GET':
@@ -1689,7 +1723,10 @@ def register_routes(app, mongoClient):
     @app.route('/goals')
     @login_required
     def goals():
-        goals = Goal.query.filter_by(user_id=current_user._id).all()
+        goals = list(mongoClient.getCollectionEndpoint('Goal').find({"user_id":current_user._id}))
+        for i in range(len(goals)):
+            goals[i] = deserializeDoc.goal(goals[i])
+
         return render_template('goals.html', goals=goals)
 
     @app.route('/goals/add', methods=['GET', 'POST'])

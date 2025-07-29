@@ -53,7 +53,7 @@ class Asset():
         self.weight = weight
         self.risk_level = risk_level
         self.created_at = created_at
-        self.updated = updated_at
+        self.updated_at = updated_at
 
     def getid(self):
         return str(self._id)
