@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from app import app
-from models import db, User, Budget, Expense, Investment, Goal
+from temp.models import db, User, Budget, Expense, Investment, Goal
 from datetime import datetime
 
 def test_database():

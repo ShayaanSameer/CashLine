@@ -3,7 +3,7 @@ import os
 import sys
 from flask.cli import FlaskGroup
 from app import create_app, db
-from models import User, Budget, Expense, Investment, Goal
+from temp.models import User, Budget, Expense, Investment, Goal
 
 app = create_app()
 cli = FlaskGroup(app)

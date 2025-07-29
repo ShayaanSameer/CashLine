@@ -5,7 +5,7 @@ Handles the target_date nullable change for the Goal model
 """
 
 from app import app, db
-from models import User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
+from temp.models import User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
 
 def migrate_database():
     with app.app_context():
