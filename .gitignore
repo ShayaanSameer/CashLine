@@ -1,4 +1,13 @@
+<<<<<<< HEAD
 .env
 
 __pycache__/
 __pycache__/*
+=======
+__pycache__/config.cpython-312.pyc
+__pycache__/forms.cpython-312.pyc
+__pycache__/models.cpython-312.pyc
+__pycache__/mongodb_operations.cpython-312.pyc
+__pycache__/mongoModels.cpython-312.pyc
+db/__pycache__/mongodb_operations.cpython-312.pyc
+>>>>>>> 53387cc (updating render)

@@ -17,6 +17,8 @@ services:
         fromDatabase:
           name: budget-tracker-db
           property: connectionString
+      - key: URI
+        sync: false
     autoDeploy: true
 
 databases:
