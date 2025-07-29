@@ -32,7 +32,12 @@ def create_app(config_name='default'):
     
     @login_manager.user_loader
     def load_user(user_id):
-        userDoc = dbClient.getCollectionEndpoint('User').find_one({"_id":ObjectId(user_id)})
+        try:
+            objectUser = ObjectId(user_id)
+        except:
+            return None
+        
+        userDoc = dbClient.getCollectionEndpoint('User').find_one({"_id":objectUser})
         if userDoc:
             return deserializeDoc.user(userDoc)
         else:
