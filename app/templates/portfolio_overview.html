@@ -87,22 +87,22 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('current_holdings') }}" class="btn btn-outline-primary w-100">
+                            <a href="{{ url_for('portfolio.current_holdings') }}" class="btn btn-outline-primary w-100">
                                 <i class="material-icons-round">add</i> Add Investment
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('asset_allocation') }}" class="btn btn-outline-success w-100">
+                            <a href="{{ url_for('portfolio.asset_allocation') }}" class="btn btn-outline-success w-100">
                                 <i class="material-icons-round">pie_chart</i> Asset Allocation
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('retirement_planning') }}" class="btn btn-outline-warning w-100">
+                            <a href="{{ url_for('portfolio.retirement_planning') }}" class="btn btn-outline-warning w-100">
                                 <i class="material-icons-round">schedule</i> Retirement Planning
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('automated_retirement_onboarding') }}" class="btn btn-outline-info w-100">
+                            <a href="{{ url_for('portfolio.automated_retirement_onboarding') }}" class="btn btn-outline-info w-100">
                                 <i class="material-icons-round">auto_awesome</i> Smart Planning
                             </a>
                         </div>
@@ -120,7 +120,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Current Holdings</h5>
-                    <a href="{{ url_for('current_holdings') }}" class="btn btn-sm btn-primary">View All</a>
+                    <a href="{{ url_for('portfolio.current_holdings') }}" class="btn btn-sm btn-primary">View All</a>
                 </div>
                 <div class="card-body">
                     {% if current_investments %}
@@ -172,7 +172,7 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <a href="{{ url_for('edit_holding', investment_id=investment.getid()) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                            <a href="{{ url_for('portfolio.edit_holding', investment_id=investment.getid()) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -183,7 +183,7 @@
                         <div class="text-center py-4">
                             <i class="material-icons-round text-muted" style="font-size: 3rem;">trending_up</i>
                             <p class="text-muted mt-2">No investments yet</p>
-                            <a href="{{ url_for('add_holding') }}" class="btn btn-primary">Add Your First Investment</a>
+                            <a href="{{ url_for('portfolio.add_holding') }}" class="btn btn-primary">Add Your First Investment</a>
                         </div>
                     {% endif %}
                 </div>
@@ -197,7 +197,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Retirement Profile</h5>
-                    <a href="{{ url_for('retirement_profile') }}" class="btn btn-sm btn-outline-warning">Update</a>
+                    <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-sm btn-outline-warning">Update</a>
                 </div>
                 <div class="card-body">
                     {% if profile %}
@@ -222,7 +222,7 @@
                     {% else %}
                         <div class="text-center py-3">
                             <p class="text-muted">No retirement profile set up</p>
-                            <a href="{{ url_for('retirement_profile') }}" class="btn btn-warning">Set Up Profile</a>
+                            <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-warning">Set Up Profile</a>
                         </div>
                     {% endif %}
                 </div>
@@ -232,7 +232,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Retirement Plans</h5>
-                    <a href="{{ url_for('retirement_plans') }}" class="btn btn-sm btn-outline-warning">View All</a>
+                    <a href="{{ url_for('portfolio.retirement_plans') }}" class="btn btn-sm btn-outline-warning">View All</a>
                 </div>
                 <div class="card-body">
                     {% if retirement_plans %}
@@ -253,7 +253,7 @@
                     {% else %}
                         <div class="text-center py-3">
                             <p class="text-muted">No retirement plans yet</p>
-                            <a href="{{ url_for('automated_retirement_onboarding') }}" class="btn btn-warning">Create Smart Plan</a>
+                            <a href="{{ url_for('portfolio.automated_retirement_onboarding') }}" class="btn btn-warning">Create Smart Plan</a>
                         </div>
                     {% endif %}
                 </div>
@@ -267,7 +267,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Asset Allocation</h5>
-                    <a href="{{ url_for('asset_allocation') }}" class="btn btn-sm btn-success">Manage</a>
+                    <a href="{{ url_for('portfolio.asset_allocation') }}" class="btn btn-sm btn-success">Manage</a>
                 </div>
                 <div class="card-body">
                     {% if retirement_assets %}
@@ -303,7 +303,7 @@
                         <div class="text-center py-4">
                             <i class="material-icons-round text-muted" style="font-size: 3rem;">pie_chart</i>
                             <p class="text-muted mt-2">No asset allocation set up</p>
-                            <a href="{{ url_for('add_asset') }}" class="btn btn-success">Add Assets</a>
+                            <a href="{{ url_for('portfolio.add_asset') }}" class="btn btn-success">Add Assets</a>
                         </div>
                     {% endif %}
                 </div>

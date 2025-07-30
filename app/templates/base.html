@@ -173,22 +173,22 @@
             <div class="sidebar-time" id="sidebar-time"></div>
         </div>
         <div class="sidebar-list">
-            <a href="{{ url_for('dashboard') }}" class="sidebar-item {% if request.path == url_for('dashboard') %}active{% endif %}">
+            <a href="{{ url_for('main.dashboard') }}" class="sidebar-item {% if request.path == url_for('main.dashboard') %}active{% endif %}">
                 <i class="material-icons-round">home</i> <span>Dashboard</span>
             </a>
-            <a href="{{ url_for('budget') }}" class="sidebar-item {% if request.path.startswith('/budget') %}active{% endif %}">
+            <a href="{{ url_for('budget.budget') }}" class="sidebar-item {% if request.path.startswith('/budget') %}active{% endif %}">
                 <i class="material-icons-round">account_balance_wallet</i> <span>Budgets</span>
             </a>
-            <a href="{{ url_for('expenses') }}" class="sidebar-item {% if request.path.startswith('/expenses') %}active{% endif %}">
+            <a href="{{ url_for('expenses.expenses') }}" class="sidebar-item {% if request.path.startswith('/expenses') %}active{% endif %}">
                 <i class="material-icons-round">receipt_long</i> <span>Expenses</span>
             </a>
-            <a href="{{ url_for('portfolio_overview') }}" class="sidebar-item {% if request.path.startswith('/portfolio') %}active{% endif %}">
+            <a href="{{ url_for('portfolio.portfolio_overview') }}" class="sidebar-item {% if request.path.startswith('/portfolio') %}active{% endif %}">
                 <i class="material-icons-round">trending_up</i> <span>Portfolio</span>
             </a>
-            <a href="{{ url_for('advice') }}" class="sidebar-item {% if request.path.startswith('/advice') %}active{% endif %}">
+            <a href="{{ url_for('advice.advice') }}" class="sidebar-item {% if request.path.startswith('/advice') %}active{% endif %}">
                 <i class="material-icons-round">lightbulb</i> <span>Advice</span>
             </a>
-            <a href="{{ url_for('goals') }}" class="sidebar-item {% if request.path.startswith('/goals') %}active{% endif %}">
+            <a href="{{ url_for('goals.goals') }}" class="sidebar-item {% if request.path.startswith('/goals') %}active{% endif %}">
                 <i class="material-icons-round">flag</i> <span>Goals</span>
             </a>
         </div>
@@ -198,7 +198,7 @@
                 <i class="material-icons-round">account_circle</i>
                 <span>{{ current_user.username }}</span>
             </div>
-            <a href="{{ url_for('logout') }}" class="logout-btn w-100 d-block text-center">
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn w-100 d-block text-center">
                 <i class="fa-solid fa-sign-out-alt me-2"></i>Logout
             </a>
         </div>

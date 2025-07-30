@@ -15,7 +15,7 @@ from app.operations import mongoDBClient, deserializeDoc
 
 budget_bp = Blueprint("budget", __name__)
 
-@budget_bp.route('/budget', methods=['GET', 'POST'])
+@budget_bp.route('/budget', methods=['GET', 'POST'], endpoint='budget')
 @login_required
 def budget():
     form = BudgetForm()
@@ -32,7 +32,7 @@ def budget():
         current_app.mongo.getCollectionEndpoint('Budget').insert_one(doc)
 
         flash('Budget added successfully!', 'success')
-        return redirect(url_for('budget'))
+        return redirect(url_for('budget.budget'))
     
     budgets = list(current_app.mongo.getCollectionEndpoint('Budget').find({"user_id" : current_user._id}))
     for i in range(len(budgets)):
@@ -40,7 +40,7 @@ def budget():
 
     return render_template('budget.html', form=form, budgets=budgets)
 
-@budget_bp.route('/edit_budget/<budget_id>', methods=['GET', 'POST'])
+@budget_bp.route('/edit_budget/<budget_id>', methods=['GET', 'POST'], endpoint='edit_budget')
 @login_required
 def edit_budget(budget_id):
     budget_doc = current_app.mongo.getCollectionEndpoint('Budget').find_one({"_id": ObjectId(budget_id)})
@@ -50,7 +50,7 @@ def edit_budget(budget_id):
 
     if budget.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('budget'))
+        return redirect(url_for('budget.budget'))
     
     form = BudgetForm()
     if form.validate_on_submit():
@@ -70,7 +70,7 @@ def edit_budget(budget_id):
         )
 
         flash('Budget updated successfully!', 'success')
-        return redirect(url_for('budget'))
+        return redirect(url_for('budget.budget'))
     elif request.method == 'GET':
         form.category.data = budget.category
         form.limit_amount.data = budget.limit_amount
@@ -79,7 +79,7 @@ def edit_budget(budget_id):
     
     return render_template('edit_budget.html', form=form, budget=budget)
 
-@budget_bp.route('/delete_budget/<budget_id>', methods=['POST'])
+@budget_bp.route('/delete_budget/<budget_id>', methods=['POST'], endpoint='delete_budget')
 @login_required
 def delete_budget(budget_id):
     budget_doc = current_app.mongo.getCollectionEndpoint('Budget').find_one({"_id": ObjectId(budget_id)})
@@ -89,8 +89,8 @@ def delete_budget(budget_id):
 
     if budget.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('budget'))
+        return redirect(url_for('budget.budget'))
     
     current_app.mongo.getCollectionEndpoint('Budget').delete_one({"_id" : ObjectId(budget_id)})
     flash('Budget deleted successfully!', 'success')
-    return redirect(url_for('budget'))
+    return redirect(url_for('budget.budget'))

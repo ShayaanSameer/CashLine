@@ -15,7 +15,7 @@ from app.operations import mongoDBClient, deserializeDoc, summarize_user_financi
 
 advice_bp = Blueprint("advice", __name__)
 
-@advice_bp.route('/advice', methods=['GET', 'POST'])
+@advice_bp.route('/advice', methods=['GET', 'POST'], endpoint='advice')
 @login_required
 def advice():
     GEMINI_API_KEY = current_app.config["GEMINI_API_KEY"]
@@ -77,7 +77,7 @@ def advice():
     
     return render_template('advice.html')
 
-@advice_bp.route('/advice/chat', methods=['POST'])
+@advice_bp.route('/advice/chat', methods=['POST'], endpoint='advice_chat')
 @login_required
 def advice_chat():
     GEMINI_API_KEY = current_app.config["GEMINI_API_KEY"]

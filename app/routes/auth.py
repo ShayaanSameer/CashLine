@@ -15,10 +15,10 @@ from app.operations import deserializeDoc
 
 auth_bp = Blueprint("auth", __name__)
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'], endpoint='login')
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     
     form = LoginForm()
     if form.validate_on_submit():
@@ -28,7 +28,7 @@ def login():
             login_user(user)
             next_page = request.args.get('next')
             print("Logging in user:", user.username, " Authenticated?", user.is_authenticated)
-            return redirect(next_page) if next_page else redirect(url_for('dashboard'))
+            return redirect(next_page) if next_page else redirect(url_for('main.dashboard'))
         else:
             if not user:
                 flash('Username not found. Please check your username or create a new account.', 'error')
@@ -37,10 +37,10 @@ def login():
 
     return render_template('login.html', form=form)
 
-@auth_bp.route('/register', methods=['GET', 'POST'])
+@auth_bp.route('/register', methods=['GET', 'POST'], endpoint='register')
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     
     form = RegistrationForm(current_app.mongo, request.form)
     if form.validate_on_submit():
@@ -72,14 +72,14 @@ def register():
             current_app.mongo.getCollectionEndpoint('User').insert_one(doc)
 
             flash('Registration successful! Please log in with your new account.', 'login_success')
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         except Exception as e:
             flash('Registration failed. Please try again.', 'error')
     
     return render_template('register.html', form=form)
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout', endpoint='logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('auth.login'))

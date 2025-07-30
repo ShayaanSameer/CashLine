@@ -15,7 +15,7 @@ from app.operations import mongoDBClient, deserializeDoc, fetch_exchange_rate, g
 
 main_bp = Blueprint("main", __name__)
 
-@main_bp.route('/onboarding', methods=['GET', 'POST'])
+@main_bp.route('/onboarding', methods=['GET', 'POST'], endpoint="onboarding")
 @login_required
 def onboarding():
     GEMINI_API_KEY = current_app.app["GEMINI_API_KEY"]
@@ -104,11 +104,11 @@ def onboarding():
     
     return render_template('onboarding.html', message=message, error=error)
 
-@main_bp.route('/test-onboarding')
+@main_bp.route('/test-onboarding', endpoint="test_onboarding")
 def test_onboarding():
     return "Onboarding route is working!"
 
-@main_bp.route('/onboarding/confirm', methods=['POST'])
+@main_bp.route('/onboarding/confirm', methods=['POST'], endpoint="onboarding_confirm")
 def onboarding_confirm():
     income = request.form.get('income')
     rent = request.form.get('rent')
@@ -171,13 +171,12 @@ def onboarding_confirm():
     
     try:
         flash('Welcome! Your personalized budget has been set up.', 'success')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     except Exception as e:
         flash('An error occurred while setting up your budget.', 'error')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     
-
-@main_bp.route('/set_currency', methods=['POST', 'GET'])
+@main_bp.route('/set_currency', methods=['POST', 'GET'], endpoint="set_currency")
 def set_currency():
     code = request.values.get('currency', 'USD').upper()
     CURRENCY_LIST = [
@@ -192,9 +191,9 @@ def set_currency():
     rate = fetch_exchange_rate(code, 'USD', current_app.config["EXCHANGE_RATE_API_KEY"])
     session['exchange_rate'] = rate
     session['currency_rate'] = rate
-    return redirect(request.referrer or url_for('dashboard'))
+    return redirect(request.referrer or url_for('main.dashboard'))
     
-@main_bp.route('/')
+@main_bp.route('/', endpoint="dashboard")
 @login_required
 def dashboard():
     # Always ensure currency and rate are set

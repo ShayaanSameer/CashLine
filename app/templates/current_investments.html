@@ -11,7 +11,7 @@
                     <h1 class="h3 mb-0">Current Investments</h1>
                     <p class="text-muted">Track your investment portfolio with real-time pricing</p>
                 </div>
-                <a href="{{ url_for('add_investment') }}" class="btn btn-primary">
+                <a href="{{ url_for('portfolio.add_investment') }}" class="btn btn-primary">
                     <i class="material-icons-round me-2">add</i>Add Investment
                 </a>
             </div>
@@ -193,7 +193,7 @@
                 <i class="material-icons-round text-muted" style="font-size: 4rem;">trending_up</i>
                 <h4 class="mt-3">No Investments Yet</h4>
                 <p class="text-muted">Start building your investment portfolio by adding your first investment.</p>
-                <a href="{{ url_for('add_investment') }}" class="btn btn-primary btn-lg">
+                <a href="{{ url_for('portfolio.add_investment') }}" class="btn btn-primary btn-lg">
                     <i class="material-icons-round me-2">add</i>Add Your First Investment
                 </a>
             </div>

@@ -15,7 +15,7 @@ from app.operations import mongoDBClient, deserializeDoc
 
 goals_bp = Blueprint("goals", __name__)
 
-@goals_bp.route('/goals')
+@goals_bp.route('/goals', endpoint='goals')
 @login_required
 def goals():
     goals = list(current_app.mongo.getCollectionEndpoint('Goal').find({"user_id":current_user._id}))
@@ -24,7 +24,7 @@ def goals():
 
     return render_template('goals.html', goals=goals)
 
-@goals_bp.route('/goals/add', methods=['GET', 'POST'])
+@goals_bp.route('/goals/add', methods=['GET', 'POST'], endpoint='add_goal')
 @login_required
 def add_goal():
     form = GoalForm()
@@ -41,11 +41,11 @@ def add_goal():
         doc.pop("_id", None)
         current_app.mongo.getCollectionEndpoint('Goal').insert_one(doc)
         flash('Goal added successfully!', 'success')
-        return redirect(url_for('goals'))
+        return redirect(url_for('goals.goals'))
     
     return render_template('add_goal.html', form=form)
 
-@goals_bp.route('/goals/edit/<goal_id>', methods=['GET', 'POST'])
+@goals_bp.route('/goals/edit/<goal_id>', methods=['GET', 'POST'], endpoint='edit_goal')
 @login_required
 def edit_goal(goal_id):
     goal_doc = current_app.mongo.getCollectionEndpoint('Goal').find_one({"_id": ObjectId(goal_id)})
@@ -55,7 +55,7 @@ def edit_goal(goal_id):
 
     if goal.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('goals'))
+        return redirect(url_for('goals.goals'))
     
     form = GoalForm()
     if form.validate_on_submit():
@@ -74,7 +74,7 @@ def edit_goal(goal_id):
             }})
         
         flash('Goal updated successfully!', 'success')
-        return redirect(url_for('goals'))
+        return redirect(url_for('goals.goals'))
     elif request.method == 'GET':
         form.name.data = goal.name
         form.target_amount.data = goal.target_amount
@@ -83,7 +83,7 @@ def edit_goal(goal_id):
     
     return render_template('edit_goal.html', form=form, goal=goal)
 
-@goals_bp.route('/goals/delete/<goal_id>', methods=['POST'])
+@goals_bp.route('/goals/delete/<goal_id>', methods=['POST'], endpoint='delete_goal')
 @login_required
 def delete_goal(goal_id):
     goal_doc = current_app.mongo.getCollectionEndpoint('Goal').find_one({"_id": ObjectId(goal_id)})
@@ -92,8 +92,8 @@ def delete_goal(goal_id):
     goal = deserializeDoc.goal(goal_doc)
     if goal.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('goals'))
+        return redirect(url_for('goals.goals'))
     
     current_app.mongo.getCollectionEndpoint('Goal').delete_one({"_id" : ObjectId(goal_id)})
     flash('Goal deleted successfully!', 'success')
-    return redirect(url_for('goals'))
+    return redirect(url_for('goals.goals'))

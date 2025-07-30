@@ -9,7 +9,7 @@
                     <h1 class="h2 mb-2">Add Investment</h1>
                     <p class="text-muted">Add a new investment to your portfolio</p>
                 </div>
-                <a href="{{ url_for('current_holdings') }}" class="btn btn-outline-secondary">
+                <a href="{{ url_for('portfolio.current_holdings') }}" class="btn btn-outline-secondary">
                     <i class="material-icons-round">arrow_back</i> Back to Holdings
                 </a>
             </div>
@@ -86,7 +86,7 @@
                         </div>
                         
                         <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('current_holdings') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ url_for('portfolio.current_holdings') }}" class="btn btn-secondary">Cancel</a>
                             {{ form.submit(class="btn btn-primary") }}
                         </div>
                     </form>

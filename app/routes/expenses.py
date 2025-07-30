@@ -15,7 +15,7 @@ from app.operations import mongoDBClient, deserializeDoc, fetch_exchange_rate
 
 expenses_bp = Blueprint("expenses", __name__)
 
-@expenses_bp.route('/expenses', methods=['GET', 'POST'])
+@expenses_bp.route('/expenses', methods=['GET', 'POST'], endpoint='expenses')
 @login_required
 def expenses():
     form = ExpenseForm()
@@ -48,7 +48,7 @@ def expenses():
         doc.pop("_id", None)
         current_app.mongo.getCollectionEndpoint('Expense').insert_one(doc)
         flash('Expense added successfully!', 'success')
-        return redirect(url_for('expenses'))
+        return redirect(url_for('expenses.expenses'))
     
 
     expenses = list(current_app.mongo.getCollectionEndpoint('Expense').find({"user_id":current_user._id}).sort({"date" : -1}))
@@ -57,7 +57,7 @@ def expenses():
 
     return render_template('expenses.html', form=form, expenses=expenses)
 
-@expenses_bp.route('/edit_expense/<expense_id>', methods=['GET', 'POST'])
+@expenses_bp.route('/edit_expense/<expense_id>', methods=['GET', 'POST'], endpoint='edit_expense')
 @login_required
 def edit_expense(expense_id):
     expense_doc = current_app.mongo.getCollectionEndpoint('Expense').find_one({"_id": ObjectId(expense_id)})
@@ -67,7 +67,7 @@ def edit_expense(expense_id):
 
     if expense.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('expenses'))
+        return redirect(url_for('expenses.expenses'))
     
     form = ExpenseForm()
     
@@ -105,7 +105,7 @@ def edit_expense(expense_id):
             }})
 
         flash('Expense updated successfully!', 'success')
-        return redirect(url_for('expenses'))
+        return redirect(url_for('expenses.expenses'))
     elif request.method == 'GET':
         form.amount.data = expense.amount
         form.category.data = expense.category
@@ -115,7 +115,7 @@ def edit_expense(expense_id):
     
     return render_template('edit_expense.html', form=form, expense=expense)
 
-@expenses_bp.route('/delete_expense/<expense_id>', methods=['POST'])
+@expenses_bp.route('/delete_expense/<expense_id>', methods=['POST'], endpoint='delete_expense')
 @login_required
 def delete_expense(expense_id):
     expense_doc = current_app.mongo.getCollectionEndpoint('Expense').find_one({"_id": ObjectId(expense_id)})
@@ -125,8 +125,8 @@ def delete_expense(expense_id):
 
     if expense.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('expenses'))
+        return redirect(url_for('expenses.expenses'))
     
     current_app.mongo.getCollectionEndpoint('Expense').delete_one({"_id" : ObjectId(expense_id)})
     flash('Expense deleted successfully!', 'success')
-    return redirect(url_for('expenses'))
+    return redirect(url_for('expenses.expenses'))

@@ -16,7 +16,7 @@ from app.operations import calculate_monthly_savings, search_stock_api, get_enha
 
 portfolio_bp = Blueprint("portfolio", __name__)
 
-@portfolio_bp.route('/investments/retirement/assets/get_expected_return')
+@portfolio_bp.route('/investments/retirement/assets/get_expected_return', endpoint="get_expected_return")
 @login_required
 def get_expected_return():
     """API endpoint to get expected return and risk level for asset type and symbol"""
@@ -49,7 +49,7 @@ def get_expected_return():
         'source': 'curated'
     })
 
-@portfolio_bp.route('/portfolio/allocation/get_expected_return')
+@portfolio_bp.route('/portfolio/allocation/get_expected_return', endpoint='get_allocation_expected_return')
 @login_required
 def get_allocation_expected_return():
     """API endpoint to get expected return and risk level for asset type and symbol"""
@@ -83,7 +83,7 @@ def get_allocation_expected_return():
     })
 
 # Unified Portfolio Management Routes
-@portfolio_bp.route('/portfolio')
+@portfolio_bp.route('/portfolio', endpoint='portfolio_overview')
 @login_required
 def portfolio_overview():
     """Main portfolio dashboard - unified view of all investments and retirement planning"""
@@ -163,7 +163,7 @@ def portfolio_overview():
                             total_retirement_assets=total_retirement_assets)
 
 # Current Holdings Management
-@portfolio_bp.route('/portfolio/holdings')
+@portfolio_bp.route('/portfolio/holdings', endpoint='current_holdings')
 @login_required
 def current_holdings():
     """Manage current investment holdings with real-time tracking"""
@@ -220,7 +220,7 @@ def current_holdings():
                             total_gain_loss=total_gain_loss,
                             total_gain_loss_pct=total_gain_loss_pct)
 
-@portfolio_bp.route('/portfolio/holdings/add', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/holdings/add', methods=['GET', 'POST'], endpoint='add_holding')
 @login_required
 def add_holding():
     form = InvestmentForm()
@@ -236,11 +236,11 @@ def add_holding():
         doc.pop("_id", None)
         current_app.mongo.getCollectionEndpoint('Investment').insert_one(doc)
         flash('Investment added successfully!', 'success')
-        return redirect(url_for('current_holdings'))
+        return redirect(url_for('portfolio.current_holdings'))
     
     return render_template('add_holding.html', form=form)
 
-@portfolio_bp.route('/portfolio/holdings/edit/<investment_id>', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/holdings/edit/<investment_id>', methods=['GET', 'POST'], endpoint='edit_holding')
 @login_required
 def edit_holding(investment_id):
     investment_doc = current_app.mongo.getCollectionEndpoint('Investment').find_one({"_id": ObjectId(investment_id)})
@@ -250,7 +250,7 @@ def edit_holding(investment_id):
     
     if investment.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('current_holdings'))
+        return redirect(url_for('portfolio.current_holdings'))
     
     form = InvestmentForm()
     if form.validate_on_submit():
@@ -271,7 +271,7 @@ def edit_holding(investment_id):
             }})
 
         flash('Investment updated successfully!', 'success')
-        return redirect(url_for('current_holdings'))
+        return redirect(url_for('portfolio.current_holdings'))
     
     elif request.method == 'GET':
         form.symbol.data = investment.symbol
@@ -281,7 +281,7 @@ def edit_holding(investment_id):
     
     return render_template('edit_holding.html', form=form, investment=investment)
 
-@portfolio_bp.route('/portfolio/holdings/delete/<investment_id>', methods=['POST'])
+@portfolio_bp.route('/portfolio/holdings/delete/<investment_id>', methods=['POST'], endpoint='delete_holding')
 @login_required
 def delete_holding(investment_id):
     investment_doc = current_app.mongo.getCollectionEndpoint('Investment').find_one({"_id": ObjectId(investment_id)})
@@ -291,14 +291,14 @@ def delete_holding(investment_id):
 
     if investment.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('current_holdings'))
+        return redirect(url_for('portfolio.current_holdings'))
     
     current_app.mongo.getCollectionEndpoint('Investment').delete_one({"_id" : ObjectId(investment_id)})
     flash('Investment deleted successfully!', 'success')
-    return redirect(url_for('current_holdings'))
+    return redirect(url_for('portfolio.current_holdings'))
 
 # Retirement Planning
-@portfolio_bp.route('/portfolio/retirement')
+@portfolio_bp.route('/portfolio/retirement', endpoint='retirement_planning')
 @login_required
 def retirement_planning():
     """Retirement planning dashboard"""
@@ -318,7 +318,7 @@ def retirement_planning():
                             retirement_plans=retirement_plans,
                             retirement_assets=retirement_assets)
 
-@portfolio_bp.route('/portfolio/retirement/profile', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/retirement/profile', methods=['GET', 'POST'], endpoint='retirement_profile')
 @login_required
 def retirement_profile():
     """Manage retirement profile and goals"""
@@ -348,7 +348,7 @@ def retirement_profile():
             current_app.mongo.getCollectionEndpoint('UserProfile').insert_one(docs)
         
         flash('Retirement profile updated successfully!', 'success')
-        return redirect(url_for('retirement_planning'))
+        return redirect(url_for('portfolio.retirement_planning'))
     
     elif request.method == 'GET' and profile:
         form.current_age.data = profile.age
@@ -360,7 +360,7 @@ def retirement_profile():
     return render_template('retirement_profile.html', form=form, profile=profile)
 
 # Asset Allocation Management
-@portfolio_bp.route('/portfolio/allocation')
+@portfolio_bp.route('/portfolio/allocation', endpoint='asset_allocation')
 @login_required
 def asset_allocation():
     """Manage retirement portfolio asset allocation"""
@@ -374,7 +374,7 @@ def asset_allocation():
     
     return render_template('asset_allocation.html', assets=assets, total_weight=total_weight, weighted_return=weighted_return)
 
-@portfolio_bp.route('/portfolio/allocation/add', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/allocation/add', methods=['GET', 'POST'], endpoint='add_asset')
 @login_required
 def add_asset():
     form = AssetForm()
@@ -412,11 +412,11 @@ def add_asset():
         doc.pop("_id", None)
         current_app.mongo.getCollectionEndpoint('Asset').insert_one(doc)
         flash('Asset added successfully!', 'success')
-        return redirect(url_for('asset_allocation'))
+        return redirect(url_for('portfolio.asset_allocation'))
     
     return render_template('add_asset.html', form=form)
 
-@portfolio_bp.route('/portfolio/allocation/search')
+@portfolio_bp.route('/portfolio/allocation/search', endpoint='search_assets')
 @login_required
 def search_assets():
     query = request.args.get('q', '').strip()
@@ -433,7 +433,7 @@ def search_assets():
     
     return jsonify(results)
 
-@portfolio_bp.route('/portfolio/holdings/search')
+@portfolio_bp.route('/portfolio/holdings/search', endpoint='search_holdings')
 @login_required
 def search_holdings():
     query = request.args.get('q', '').strip()
@@ -450,7 +450,7 @@ def search_holdings():
     
     return jsonify({'results': results})
 
-@portfolio_bp.route('/portfolio/allocation/edit/<asset_id>', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/allocation/edit/<asset_id>', methods=['GET', 'POST'], endpoint='edit_asset')
 @login_required
 def edit_asset(asset_id):
     asset_doc = current_app.mongo.getCollectionEndpoint('Asset').find_one({"_id": ObjectId(asset_id)})
@@ -460,7 +460,7 @@ def edit_asset(asset_id):
 
     if asset.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('asset_allocation'))
+        return redirect(url_for('portfolio.asset_allocation'))
     
     form = AssetForm()
     
@@ -508,7 +508,7 @@ def edit_asset(asset_id):
         )
         
         flash('Asset updated successfully!', 'success')
-        return redirect(url_for('asset_allocation'))
+        return redirect(url_for('portfolio.asset_allocation'))
     
     elif request.method == 'GET':
         form.symbol.data = asset.symbol
@@ -520,7 +520,7 @@ def edit_asset(asset_id):
     
     return render_template('edit_asset.html', form=form, asset=asset)
 
-@portfolio_bp.route('/portfolio/allocation/delete/<asset_id>', methods=['POST'])
+@portfolio_bp.route('/portfolio/allocation/delete/<asset_id>', methods=['POST'], endpoint='delete_asset')
 @login_required
 def delete_asset(asset_id):
     asset_doc = current_app.mongo.getCollectionEndpoint('Asset').find_one({"_id": ObjectId(asset_id)})
@@ -530,14 +530,14 @@ def delete_asset(asset_id):
 
     if asset.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('asset_allocation'))
+        return redirect(url_for('portfolio.asset_allocation'))
     
     current_app.mongo.getCollectionEndpoint('Asset').delete_one({"_id" : ObjectId(asset_id)})
     flash('Asset deleted successfully!', 'success')
-    return redirect(url_for('asset_allocation'))
+    return redirect(url_for('portfolio.asset_allocation'))
 
 # Retirement Plans Management
-@portfolio_bp.route('/portfolio/retirement/plans')
+@portfolio_bp.route('/portfolio/retirement/plans', endpoint='retirement_plans')
 @login_required
 def retirement_plans():
     """Manage retirement plans"""
@@ -548,7 +548,7 @@ def retirement_plans():
 
     return render_template('retirement_plans.html', plans=plans)
 
-@portfolio_bp.route('/portfolio/retirement/plans/add', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/retirement/plans/add', methods=['GET', 'POST'], endpoint='add_retirement_plan')
 @login_required
 def add_retirement_plan():
     form = RetirementPlanForm()
@@ -566,11 +566,11 @@ def add_retirement_plan():
         docs.pop("_id", None)
         current_app.mongo.getCollectionEndpoint('RetirementPlan').insert_one(docs)
         flash('Retirement plan added successfully!', 'success')
-        return redirect(url_for('retirement_plans'))
+        return redirect(url_for('portfolio.retirement_plans'))
     
     return render_template('add_retirement_plan.html', form=form)
 
-@portfolio_bp.route('/portfolio/retirement/plans/delete/<plan_id>', methods=['POST'])
+@portfolio_bp.route('/portfolio/retirement/plans/delete/<plan_id>', methods=['POST'], endpoint='delete_retirement_plan')
 @login_required
 def delete_retirement_plan(plan_id):
     plan_doc = current_app.mongo.getCollectionEndpoint('RetirementPlan').find_one({"_id": ObjectId(plan_id)})
@@ -580,14 +580,14 @@ def delete_retirement_plan(plan_id):
 
     if plan.user_id != current_user._id:
         flash('Access denied.', 'error')
-        return redirect(url_for('retirement_plans'))
+        return redirect(url_for('portfolio.retirement_plans'))
     
     current_app.mongo.getCollectionEndpoint('RetirementPlan').delete_one({"_id" : ObjectId(plan_id)})
     flash('Retirement plan deleted successfully!', 'success')
-    return redirect(url_for('retirement_plans'))
+    return redirect(url_for('portfolio.retirement_plans'))
 
 # Automated Retirement Planning
-@portfolio_bp.route('/portfolio/retirement/automated', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/retirement/automated', methods=['GET', 'POST'], endpoint='automated_retirement_onboarding')
 @login_required
 def automated_retirement_onboarding():
     """Automated retirement planning based on industry best practices"""
@@ -680,12 +680,12 @@ def automated_retirement_onboarding():
         current_app.mongo.getCollectionEndpoint('RetirementPlan').insert_one(docs)
 
         flash(f'Automated retirement plan created! Target: ${target_amount:,.0f}, Monthly savings: ${monthly_savings:,.0f}', 'success')
-        return redirect(url_for('retirement_planning'))
+        return redirect(url_for('portfolio.retirement_planning'))
     
     return render_template('automated_retirement.html', form=form)
 
 # Retirement Calculator
-@portfolio_bp.route('/portfolio/retirement/calculator', methods=['GET', 'POST'])
+@portfolio_bp.route('/portfolio/retirement/calculator', methods=['GET', 'POST'], endpoint='retirement_calculator')
 @login_required
 def retirement_calculator():
     """Multi-scenario retirement calculator"""
