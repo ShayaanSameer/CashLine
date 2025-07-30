@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Investments - Budget Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Your Investments</h4>
+                    <a href="{{ url_for('portfolio.add_investment') }}" class="btn btn-primary">Add Investment</a>
+                </div>
+                <div class="card-body">
+                    {% if investments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Shares</th>
+                                        <th>Purchase Price</th>
+                                        <th>Total Value</th>
+                                        <th>Purchase Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for investment in investments %}
+                                        <tr>
+                                            <td><strong>{{ investment.symbol }}</strong></td>
+                                            <td>{{ investment.shares }}</td>
+                                            <td>${{ "%.2f"|format(investment.purchase_price) }}</td>
+                                            <td>${{ "%.2f"|format(investment.shares * investment.purchase_price) }}</td>
+                                            <td>{{ investment.purchase_date.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('portfolio.edit_investment', investment_id=investment.getid()) }}" class="btn btn-outline-primary">Edit</a>
+                                                    <form method="POST" action="{{ url_for('portfolio.delete_investment', investment_id=investment.getid()) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3">
+                            <h5>Portfolio Summary</h5>
+                            <p class="mb-0">Total Value: <strong>${{ "%.2f"|format(investments|sum(attribute='shares') * (investments|sum(attribute='purchase_price') / investments|length if investments else 0)) }}</strong></p>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No investments recorded yet.</p>
+                        <a href="{{ url_for('portfolio.add_investment') }}" class="btn btn-primary">Add Your First Investment</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Quick Stats</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5 class="text-primary">{{ investments|length }}</h5>
+                            <small class="text-muted">Investments</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-success">${{ "%.2f"|format(investments|sum(attribute='shares') * (investments|sum(attribute='purchase_price') / investments|length if investments else 0)) }}</h5>
+                            <small class="text-muted">Total Value</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

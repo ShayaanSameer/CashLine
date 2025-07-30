@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-2">Add Investment</h1>
+                    <p class="text-muted">Add a new investment to your portfolio</p>
+                </div>
+                <a href="{{ url_for('portfolio.current_holdings') }}" class="btn btn-outline-secondary">
+                    <i class="material-icons-round">arrow_back</i> Back to Holdings
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Investment Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.symbol.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.symbol(class="form-control", placeholder="e.g., AAPL, TSLA", id="symbol-input") }}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="searchStocks()">
+                                        <i class="material-icons-round">search</i>
+                                    </button>
+                                </div>
+                                <div id="search-results" class="mt-2" style="display: none;"></div>
+                                {% if form.symbol.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.symbol.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.shares.label(class="form-label") }}
+                                {{ form.shares(class="form-control", placeholder="Number of shares") }}
+                                {% if form.shares.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.shares.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.purchase_price.label(class="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.purchase_price(class="form-control", placeholder="Price per share") }}
+                                </div>
+                                {% if form.purchase_price.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.purchase_price.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.purchase_date.label(class="form-label") }}
+                                {{ form.purchase_date(class="form-control", type="date") }}
+                                {% if form.purchase_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.purchase_date.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('portfolio.current_holdings') }}" class="btn btn-secondary">Cancel</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function searchStocks() {
+    const query = document.getElementById('symbol-input').value.trim();
+    const resultsDiv = document.getElementById('search-results');
+    
+    if (!query) {
+        alert('Please enter a search term');
+        return;
+    }
+    
+    // Show loading state
+    resultsDiv.innerHTML = '<div class="text-muted"><i class="material-icons-round">hourglass_empty</i> Searching...</div>';
+    resultsDiv.style.display = 'block';
+    
+    fetch(`/portfolio/holdings/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.results && data.results.length > 0) {
+                let html = '<div class="list-group">';
+                data.results.forEach(result => {
+                    let priceInfo = '';
+                    if (result.price && result.price.current_price) {
+                        const changeClass = result.price.change >= 0 ? 'text-success' : 'text-danger';
+                        const changeSymbol = result.price.change >= 0 ? '+' : '';
+                        const changePercent = result.price.change_percent || 0;
+                        
+                        priceInfo = `
+                            <div class="mt-1">
+                                <span class="fw-bold">$${result.price.current_price.toFixed(2)}</span>
+                                <span class="${changeClass} ms-2">
+                                    ${changeSymbol}${result.price.change.toFixed(2)} 
+                                    (${changeSymbol}${changePercent.toFixed(2)}%)
+                                </span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Format the display name with symbol, company name, type, and region
+                    const displayName = `${result.symbol} - ${result.name}`;
+                    const displayDetails = `${result.type || 'Stock'} • ${result.region || 'US'}`;
+                    
+                    html += `
+                        <button type="button" class="list-group-item list-group-item-action" 
+                                onclick="selectStock('${result.symbol}', '${result.name}')">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">${displayName}</div>
+                                    <small class="text-muted">${displayDetails}</small>
+                                    ${priceInfo}
+                                </div>
+                                <div class="ms-2">
+                                    <small class="badge bg-secondary">${result.type || 'Stock'}</small>
+                                </div>
+                            </div>
+                        </button>
+                    `;
+                });
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = '<div class="alert alert-info">No results found. You can still add the investment manually.</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error searching stocks:', error);
+            resultsDiv.innerHTML = '<div class="text-danger">Error searching stocks</div>';
+        });
+}
+
+function selectStock(symbol, name) {
+    document.getElementById('symbol-input').value = symbol;
+    document.getElementById('search-results').style.display = 'none';
+    
+    // Show a brief confirmation
+    const resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = `<div class="text-success"><i class="material-icons-round">check_circle</i> Selected: ${symbol} - ${name}</div>`;
+    resultsDiv.style.display = 'block';
+    
+    // Hide the confirmation after 2 seconds
+    setTimeout(() => {
+        resultsDiv.style.display = 'none';
+    }, 2000);
+}
+
+// Add event listener for Enter key on symbol input
+document.getElementById('symbol-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        searchStocks();
+    }
+});
+</script>
+{% endblock %} 

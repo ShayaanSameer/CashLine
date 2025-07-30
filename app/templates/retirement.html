@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Retirement Planner{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Retirement Planner</h1>
+    
+    <!-- Automated Planning Call-to-Action -->
+    <div class="alert alert-success">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="alert-heading">New: Industry-Standard Retirement Planning!</h5>
+                <p class="mb-0">Get a personalized retirement plan using proven financial principles like the 4% rule, 80% income rule, and age-based asset allocation. No complex calculations needed!</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('portfolio.automated_retirement_onboarding') }}" class="btn btn-success btn-lg">Create Smart Plan</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profile Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Personal Profile</h5>
+                    <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-sm btn-primary">Edit Profile</a>
+                </div>
+                <div class="card-body">
+                    {% if profile %}
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Age:</strong> {{ profile.age }}</p>
+                                <p><strong>Retirement Age:</strong> {{ profile.retirement_age }}</p>
+                                <p><strong>Current Salary:</strong> ${{ "{:,.0f}".format(profile.current_salary) }}</p>
+                                <p><strong>Expected Retirement Income:</strong> ${{ "{:,.0f}".format(profile.expected_retirement_income) }}</p>
+                            </div>
+                            <div class="col-6">
+                                <p><strong>Current Savings:</strong> ${{ "{:,.0f}".format(profile.current_savings) }}</p>
+                                <p><strong>Monthly Contribution:</strong> ${{ "{:,.0f}".format(profile.monthly_contribution) }}</p>
+                                <p><strong>Risk Tolerance:</strong> {{ profile.risk_tolerance }}</p>
+                                <p><strong>Years to Retirement:</strong> {{ profile.retirement_age - profile.age }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Analysis -->
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <h6>Quick Analysis</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1"><strong>Savings Rate:</strong> {{ "%.1f"|format((profile.monthly_contribution * 12 / profile.current_salary) * 100) }}%</p>
+                                    <p class="mb-1"><strong>Income Gap:</strong> ${{ "{:,.0f}".format(profile.expected_retirement_income - profile.current_salary) }}</p>
+                                </div>
+                                <div class="col-6">
+                                    <p class="mb-1"><strong>Years to Save:</strong> {{ profile.retirement_age - profile.age }}</p>
+                                    <p class="mb-1"><strong>Monthly Gap:</strong> ${{ "{:,.0f}".format((profile.expected_retirement_income - profile.current_salary) / 12) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No profile set up yet.</p>
+                        <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-primary">Set Up Profile</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Portfolio Overview -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Portfolio Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p><strong>Total Assets:</strong> {{ portfolio_stats.total_assets }}</p>
+                            <p><strong>Total Allocation:</strong> {{ "%.1f"|format(portfolio_stats.total_weight) }}%</p>
+                            <p><strong>Expected Return:</strong> {{ "%.2f"|format(portfolio_stats.weighted_return) }}%</p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Risk Distribution:</strong></p>
+                            <ul class="list-unstyled">
+                                <li>Low: {{ portfolio_stats.risk_distribution.Low }}</li>
+                                <li>Medium: {{ portfolio_stats.risk_distribution.Medium }}</li>
+                                <li>High: {{ portfolio_stats.risk_distribution.High }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% if portfolio_stats.total_weight < 100 %}
+                        <div class="alert alert-warning">
+                            <small>Portfolio allocation is {{ "%.1f"|format(100 - portfolio_stats.total_weight) }}% under-allocated.</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assets Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Asset Allocation</h5>
+                    <a href="{{ url_for('portfolio.add_asset') }}" class="btn btn-sm btn-success">Add Asset</a>
+                </div>
+                <div class="card-body">
+                    {% if assets %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Name</th>
+                                        <th>Type</th>
+                                        <th>Expected Return</th>
+                                        <th>Weight</th>
+                                        <th>Risk Level</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for asset in assets %}
+                                    <tr>
+                                        <td><strong>{{ asset.symbol }}</strong></td>
+                                        <td>{{ asset.name }}</td>
+                                        <td>{{ asset.asset_type }}</td>
+                                        <td>{{ "%.2f"|format(asset.expected_return) }}%</td>
+                                        <td>{{ "%.1f"|format(asset.weight) }}%</td>
+                                        <td>
+                                            <span class="badge {% if asset.risk_level == 'Low' %}bg-success{% elif asset.risk_level == 'Medium' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                {{ asset.risk_level }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('portfolio.edit_asset', asset_id=asset.getid()) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                            <form method="POST" action="{{ url_for('portfolio.delete_asset', asset_id=asset.getid()) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No assets added yet.</p>
+                        <a href="{{ url_for('portfolio.add_asset') }}" class="btn btn-primary">Add Your First Asset</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Retirement Plans Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Retirement Plans</h5>
+                    <a href="{{ url_for('portfolio.add_retirement_plan') }}" class="btn btn-sm btn-success">Create Plan</a>
+                </div>
+                <div class="card-body">
+                    {% if plans %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Plan Name</th>
+                                        <th>Target Amount</th>
+                                        <th>Years to Retirement</th>
+                                        <th>Expected Return</th>
+                                        <th>Monthly Contribution Needed</th>
+                                        <th>Projected Amount</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for plan in plans %}
+                                    <tr>
+                                        <td><strong>{{ plan.name }}</strong></td>
+                                        <td>${{ "{:,.0f}".format(plan.target_amount) }}</td>
+                                        <td>{{ plan.years_to_retirement }}</td>
+                                        <td>{{ "%.2f"|format(plan.expected_return_rate) }}%</td>
+                                        <td>${{ "{:,.0f}".format(plan.monthly_contribution_needed) }}</td>
+                                        <td>${{ "{:,.0f}".format(plan.projected_amount) }}</td>
+                                        <td>
+                                            <form method="POST" action="{{ url_for('portfolio.delete_retirement_plan', plan_id=plan.getid()) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No retirement plans created yet.</p>
+                        <a href="{{ url_for('portfolio.add_retirement_plan') }}" class="btn btn-primary">Create Your First Plan</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="fas fa-user"></i> Update Profile
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('portfolio.add_asset') }}" class="btn btn-outline-success w-100 mb-2">
+                                <i class="fas fa-plus"></i> Add Asset
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('portfolio.add_retirement_plan') }}" class="btn btn-outline-info w-100 mb-2">
+                                <i class="fas fa-calculator"></i> Create Plan
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('advice.advice') }}" class="btn btn-outline-warning w-100 mb-2">
+                                <i class="fas fa-lightbulb"></i> Get Advice
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

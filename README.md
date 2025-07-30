@@ -56,8 +56,8 @@ A comprehensive personal finance management application built with Flask, featur
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/cashline.git
-   cd cashline/Budgeting/BudgetingWeb
+   git clone https://github.com/yourusername/Cashline.git
+   cd Cashline
    ```
 
 2. **Create and activate virtual environment**
@@ -84,16 +84,11 @@ A comprehensive personal finance management application built with Flask, featur
    SECRET_KEY=your_secret_key_here
    ```
 
-5. **Initialize the database**
+5. **Run the application**
    ```bash
-   python3 app.py
+   python3 run.py
    ```
    The database will be automatically created on first run.
-
-6. **Run the application**
-   ```bash
-   python3 app.py
-   ```
 
 7. **Access the application**
    Open your browser and navigate to `http://localhost:5000`
@@ -110,24 +105,34 @@ A comprehensive personal finance management application built with Flask, featur
 ## Project Structure
 
 ```
-Budgeting/
-├── BudgetingWeb/
-│   ├── app.py                 # Main Flask application
-│   ├── config.py              # Configuration settings
-│   ├── models.py              # Database models
-│   ├── forms.py               # Flask-WTF forms
-│   ├── static/
-│   │   └── style.css         # Custom styling
-│   ├── templates/             # HTML templates
-│   │   ├── base.html         # Base template
-│   │   ├── dashboard.html    # Main dashboard
-│   │   ├── budget.html       # Budget management
-│   │   ├── expenses.html     # Expense tracking
-│   │   ├── portfolio.html    # Investment portfolio
-│   │   └── ...               # Other templates
-│   └── db/                   # Database files
-├── requirements.txt           # Python dependencies
-└── README.md                 # This file
+Cashline
+├── README.md
+├── app
+│   ├── __init__.py
+│   ├── forms.py
+│   ├── mongoModels.py
+│   ├── operations.py
+│   ├── routes
+│   │   ├── advice.py
+│   │   ├── auth.py
+│   │   ├── budget.py
+│   │   ├── expenses.py
+│   │   ├── goals.py
+│   │   ├── main.py
+│   │   └── portfolio.py
+│   ├── static
+│   └── templates
+├── config.py
+├── render.yaml
+├── requirements.txt
+├── run.py
+├── scripts
+├── temp
+└── test
+    ├── test_db.py
+    ├── test_finnhub.py
+    ├── test_price.py
+    └── test_stock_search.py
 ```
 
 ## Design Features

@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Asset{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Edit Asset: {{ asset.symbol }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.symbol.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.symbol(class="form-control", id="symbol-input") }}
+                                        <button type="button" class="btn btn-outline-secondary" id="search-btn">Search</button>
+                                    </div>
+                                    {% if form.symbol.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.symbol.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div id="search-results" class="mt-2"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control") }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.asset_type.label(class="form-label") }}
+                                    {{ form.asset_type(class="form-select") }}
+                                    {% if form.asset_type.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.asset_type.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.expected_return.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.expected_return(class="form-control") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.expected_return.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.expected_return.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.weight.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.weight(class="form-control") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    {% if form.weight.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.weight.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">Portfolio allocation percentage (0-100%)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.risk_level.label(class="form-label") }}
+                                    {{ form.risk_level(class="form-select") }}
+                                    {% if form.risk_level.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.risk_level.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('portfolio.asset_allocation') }}" class="btn btn-secondary">Back to Assets</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Current Asset Info -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Asset Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Symbol:</strong> {{ asset.symbol }}</p>
+                            <p><strong>Name:</strong> {{ asset.name }}</p>
+                            <p><strong>Type:</strong> {{ asset.asset_type }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Expected Return:</strong> {{ "%.2f"|format(asset.expected_return) }}%</p>
+                            <p><strong>Weight:</strong> {{ "%.1f"|format(asset.weight) }}%</p>
+                            <p><strong>Risk Level:</strong> 
+                                <span class="badge {% if asset.risk_level == 'Low' %}bg-success{% elif asset.risk_level == 'Medium' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ asset.risk_level }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <p><strong>Last Updated:</strong> {{ asset.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-populate expected return and risk level when asset type or symbol changes
+function updateExpectedReturn() {
+    const assetType = document.querySelector('select[name="asset_type"]').value;
+    const symbol = document.querySelector('input[name="symbol"]').value;
+    
+    if (symbol) {
+        fetch(`/portfolio/allocation/get_expected_return?asset_type=${encodeURIComponent(assetType)}&symbol=${encodeURIComponent(symbol)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.expected_return) {
+                    document.querySelector('input[name="expected_return"]').value = data.expected_return;
+                    
+                    // Show a helpful message for expected return
+                    const returnField = document.querySelector('input[name="expected_return"]');
+                    const returnHelpText = returnField.parentNode.querySelector('.form-text') || 
+                                         returnField.parentNode.appendChild(document.createElement('small'));
+                    returnHelpText.className = 'form-text text-info';
+                    
+                    if (data.source === 'finnhub') {
+                        returnHelpText.textContent = `Auto-populated from Finnhub API based on ${symbol.toUpperCase()} company profile`;
+                    } else {
+                        returnHelpText.textContent = `Auto-populated based on ${assetType} type and ${symbol.toUpperCase()} symbol`;
+                    }
+                }
+                
+                if (data.risk_level) {
+                    document.querySelector('select[name="risk_level"]').value = data.risk_level;
+                    
+                    // Show a helpful message for risk level
+                    const riskField = document.querySelector('select[name="risk_level"]');
+                    const riskHelpText = riskField.parentNode.querySelector('.form-text') || 
+                                       riskField.parentNode.appendChild(document.createElement('small'));
+                    riskHelpText.className = 'form-text text-info';
+                    
+                    if (data.source === 'finnhub') {
+                        riskHelpText.textContent = `Auto-populated risk level from Finnhub API: ${data.risk_level}`;
+                    } else {
+                        riskHelpText.textContent = `Auto-populated risk level: ${data.risk_level}`;
+                    }
+                }
+                
+                // Update asset type if provided by Finnhub
+                if (data.asset_type && data.asset_type !== assetType) {
+                    document.querySelector('select[name="asset_type"]').value = data.asset_type;
+                    
+                    // Show a helpful message for asset type
+                    const assetTypeField = document.querySelector('select[name="asset_type"]');
+                    const assetTypeHelpText = assetTypeField.parentNode.querySelector('.form-text') || 
+                                           assetTypeField.parentNode.appendChild(document.createElement('small'));
+                    assetTypeHelpText.className = 'form-text text-success';
+                    assetTypeHelpText.textContent = `Auto-categorized as ${data.asset_type} based on company profile`;
+                }
+            })
+            .catch(error => {
+                console.log('Error fetching expected return and risk level:', error);
+            });
+    }
+}
+
+// Add event listeners for auto-population
+document.addEventListener('DOMContentLoaded', function() {
+    const assetTypeSelect = document.querySelector('select[name="asset_type"]');
+    const symbolInput = document.querySelector('input[name="symbol"]');
+    
+    if (assetTypeSelect) {
+        assetTypeSelect.addEventListener('change', updateExpectedReturn);
+    }
+    
+    if (symbolInput) {
+        symbolInput.addEventListener('blur', updateExpectedReturn);
+    }
+});
+
+document.getElementById('search-btn').addEventListener('click', function() {
+    const symbol = document.getElementById('symbol-input').value;
+    const resultsDiv = document.getElementById('search-results');
+    
+    if (symbol.length < 2) {
+        resultsDiv.innerHTML = '<div class="alert alert-warning">Please enter at least 2 characters to search.</div>';
+        return;
+    }
+    
+    resultsDiv.innerHTML = '<div class="text-center"><small>Searching...</small></div>';
+    
+    fetch(`/portfolio/allocation/search?q=${encodeURIComponent(symbol)}`)
+        .then(response => response.json())
+        .then(data => {
+            const results = data.results || data; // Handle both new and old format
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="alert alert-info">No results found. You can still add the asset manually.</div>';
+                return;
+            }
+            
+            let html = '<div class="list-group">';
+            results.forEach(item => {
+                let priceInfo = '';
+                if (item.price && item.price.current_price) {
+                    const changeClass = item.price.change >= 0 ? 'text-success' : 'text-danger';
+                    const changeSymbol = item.price.change >= 0 ? '+' : '';
+                    const changePercent = item.price.change_percent || 0;
+                    
+                    priceInfo = `
+                        <div class="mt-1">
+                            <span class="fw-bold">$${item.price.current_price.toFixed(2)}</span>
+                            <span class="${changeClass} ms-2">
+                                ${changeSymbol}${item.price.change.toFixed(2)} 
+                                (${changeSymbol}${changePercent.toFixed(2)}%)
+                            </span>
+                        </div>
+                    `;
+                }
+                
+                // Format the display name with symbol, company name, type, and region
+                const displayName = `${item.symbol} - ${item.name}`;
+                const displayDetails = `${item.type} • ${item.region}`;
+                
+                html += `
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="selectAsset('${item.symbol}', '${item.name}')">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">${displayName}</div>
+                                <small class="text-muted">${displayDetails}</small>
+                                ${priceInfo}
+                            </div>
+                            <div class="ms-2">
+                                <small class="badge bg-secondary">${item.type}</small>
+                            </div>
+                        </div>
+                    </button>
+                `;
+            });
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        })
+        .catch(error => {
+            resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching for assets. You can still add manually.</div>';
+        });
+});
+
+function selectAsset(symbol, name) {
+    document.getElementById('symbol-input').value = symbol;
+    document.querySelector('input[name="name"]').value = name;
+    document.getElementById('search-results').innerHTML = '';
+    
+    // Auto-populate expected return after selecting asset
+    setTimeout(updateExpectedReturn, 100);
+}
+
+// Add event listener for Enter key on symbol input
+document.getElementById('symbol-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('search-btn').click();
+    }
+});
+</script>
+{% endblock %} 

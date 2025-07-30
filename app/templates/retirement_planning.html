@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-2">Retirement Planning</h1>
+                    <p class="text-muted">Plan and track your retirement goals</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('portfolio.automated_retirement_onboarding') }}" class="btn me-2" style="background-color: #a8d5ba; border-color: #8bc5a3; color: #2d5a2d;">
+                        <i class="material-icons-round">auto_awesome</i> Smart Planning
+                    </a>
+                    <a href="{{ url_for('portfolio.retirement_calculator') }}" class="btn" style="background-color: #f8e6b3; border-color: #f0d080; color: #8b6f3d;">
+                        <i class="material-icons-round">calculate</i> Calculator
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retirement Progress Chart -->
+    {% if profile %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="material-icons-round text-primary me-2">timeline</i> Retirement Progress</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="retirementProgressChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn w-100" style="background-color: #f8e6b3; border-color: #f0d080; color: #8b6f3d;">
+                                <i class="material-icons-round">person</i> Update Profile
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('portfolio.add_retirement_plan') }}" class="btn w-100" style="background-color: #7fb3d3; border-color: #5a9bc4; color: #2d5a2d;">
+                                <i class="material-icons-round">add</i> Add Plan
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('portfolio.asset_allocation') }}" class="btn w-100" style="background-color: #a8d5ba; border-color: #8bc5a3; color: #2d5a2d;">
+                                <i class="material-icons-round">pie_chart</i> Asset Allocation
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('portfolio.retirement_calculator') }}" class="btn w-100" style="background-color: #d4a5a5; border-color: #c49595; color: #6d4c4c;">
+                                <i class="material-icons-round">calculate</i> Compare Scenarios
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Retirement Profile Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Retirement Profile</h5>
+                    <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-sm btn-outline-warning">Update</a>
+                </div>
+                <div class="card-body">
+                    {% if profile %}
+                        <div class="row">
+                            <div class="col-6">
+                                <small class="text-muted">Current Age</small>
+                                <p class="mb-2"><strong>{{ profile.age }}</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Retirement Age</small>
+                                <p class="mb-2"><strong>{{ profile.retirement_age }}</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Current Income</small>
+                                <p class="mb-2"><strong>${{ "{:,.0f}".format(profile.current_salary) }}</strong></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Target Income</small>
+                                <p class="mb-2"><strong>${{ "{:,.0f}".format(profile.expected_retirement_income) }}</strong></p>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted">Current Savings</small>
+                                <p class="mb-0"><strong>${{ "{:,.0f}".format(profile.current_savings) }}</strong></p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No retirement profile set up</p>
+                            <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-warning">Set Up Profile</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Retirement Plans</h5>
+                    <a href="{{ url_for('portfolio.retirement_plans') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if retirement_plans %}
+                        {% for plan in retirement_plans[:3] %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <strong>{{ plan.name }}</strong>
+                                <br>
+                                <small class="text-muted">Target: ${{ "{:,.0f}".format(plan.target_amount) }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">Monthly</small>
+                                <br>
+                                <strong>${{ "{:,.0f}".format(plan.monthly_contribution_needed) }}</strong>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if retirement_plans|length > 3 %}
+                            <div class="text-center">
+                                <small class="text-muted">+{{ retirement_plans|length - 3 }} more plans</small>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">No retirement plans yet</p>
+                            <a href="{{ url_for('portfolio.automated_retirement_onboarding') }}" class="btn btn-primary">Create Smart Plan</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Allocation Summary -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Asset Allocation</h5>
+                    <a href="{{ url_for('portfolio.asset_allocation') }}" class="btn btn-sm btn-success">Manage</a>
+                </div>
+                <div class="card-body">
+                    {% if retirement_assets %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Asset</th>
+                                        <th>Type</th>
+                                        <th>Weight</th>
+                                        <th>Expected Return</th>
+                                        <th>Risk Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for asset in retirement_assets[:5] %}
+                                    <tr>
+                                        <td><strong>{{ asset.symbol }}</strong></td>
+                                        <td>{{ asset.asset_type }}</td>
+                                        <td>{{ "%.1f"|format(asset.weight) }}%</td>
+                                        <td>{{ "%.1f"|format(asset.expected_return) }}%</td>
+                                        <td>
+                                            <span class="badge bg-{% if asset.risk_level == 'Low' %}success{% elif asset.risk_level == 'Medium' %}warning{% else %}danger{% endif %}">
+                                                {{ asset.risk_level }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if retirement_assets|length > 5 %}
+                            <div class="text-center mt-2">
+                                <small class="text-muted">+{{ retirement_assets|length - 5 }} more assets</small>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="material-icons-round text-muted" style="font-size: 3rem;">pie_chart</i>
+                            <p class="text-muted mt-2">No asset allocation set up</p>
+                            <a href="{{ url_for('portfolio.add_asset') }}" class="btn btn-success">Add Assets</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if profile %}
+<script>
+// Retirement Progress Chart
+const progressCtx = document.getElementById('retirementProgressChart').getContext('2d');
+const progressChart = new Chart(progressCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Current Age', 'Retirement Age'],
+        datasets: [{
+            label: 'Age',
+            data: [{{ profile.age }}, {{ profile.retirement_age }}],
+            backgroundColor: ['#7fb069', '#f4a261'],
+            borderColor: ['#7fb069', '#f4a261'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    callback: function(value) {
+                        return value + ' years';
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endif %}
+{% endblock %} 

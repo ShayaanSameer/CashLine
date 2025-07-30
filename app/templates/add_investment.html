@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Add Investment - Budget Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Add New Investment</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.symbol.label(class="form-label") }}
+                            <select id="top-stocks-dropdown" class="form-select mb-2">
+                                <option value="">-- Select from top 20 stocks --</option>
+                                <option value="AAPL">Apple (AAPL)</option>
+                                <option value="MSFT">Microsoft (MSFT)</option>
+                                <option value="GOOGL">Alphabet (GOOGL)</option>
+                                <option value="AMZN">Amazon (AMZN)</option>
+                                <option value="NVDA">Nvidia (NVDA)</option>
+                                <option value="META">Meta Platforms (META)</option>
+                                <option value="TSLA">Tesla (TSLA)</option>
+                                <option value="BRK.B">Berkshire Hathaway (BRK.B)</option>
+                                <option value="JPM">JPMorgan Chase (JPM)</option>
+                                <option value="JNJ">Johnson & Johnson (JNJ)</option>
+                                <option value="XOM">Exxon Mobil (XOM)</option>
+                                <option value="UNH">UnitedHealth Group (UNH)</option>
+                                <option value="V">Visa (V)</option>
+                                <option value="PG">Procter & Gamble (PG)</option>
+                                <option value="LLY">Eli Lilly (LLY)</option>
+                                <option value="AVGO">Broadcom (AVGO)</option>
+                                <option value="MA">Mastercard (MA)</option>
+                                <option value="HD">Home Depot (HD)</option>
+                                <option value="WMT">Walmart (WMT)</option>
+                                <option value="COST">Costco (COST)</option>
+                            </select>
+                            {{ form.symbol(class="form-control", placeholder="Enter symbol (e.g. AAPL)") }}
+                            {% if form.symbol.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.symbol.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.shares.label(class="form-label") }}
+                                    {{ form.shares(class="form-control") }}
+                                    {% if form.shares.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.shares.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.purchase_price.label(class="form-label") }}
+                                    {{ form.purchase_price(class="form-control") }}
+                                    {% if form.purchase_price.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.purchase_price.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            {{ form.purchase_date.label(class="form-label") }}
+                            {{ form.purchase_date(class="form-control", type="date") }}
+                            {% if form.purchase_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.purchase_date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('portfolio.current_holdings') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dropdown = document.getElementById('top-stocks-dropdown');
+    var symbolInput = document.querySelector('input[name="symbol"]');
+    
+    dropdown.addEventListener('change', function() {
+        var val = this.value;
+        if (val) {
+            symbolInput.value = val;
+            symbolInput.dispatchEvent(new Event('input'));
+        }
+    });
+    
+    symbolInput.addEventListener('input', function() {
+        var val = symbolInput.value.trim().toUpperCase();
+        var found = false;
+        for (var i = 0; i < dropdown.options.length; i++) {
+            if (dropdown.options[i].value.toUpperCase() === val) {
+                dropdown.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+        if (!found) dropdown.selectedIndex = 0;
+    });
+});
+</script>
+{% endblock %} 

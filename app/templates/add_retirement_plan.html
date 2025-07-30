@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Create Retirement Plan{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Create Retirement Plan</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.name.label(class="form-label") }}
+                                    {{ form.name(class="form-control") }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.target_amount.label(class="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.target_amount(class="form-control") }}
+                                    </div>
+                                    {% if form.target_amount.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.target_amount.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.years_to_retirement.label(class="form-label") }}
+                                    {{ form.years_to_retirement(class="form-control") }}
+                                    {% if form.years_to_retirement.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.years_to_retirement.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.expected_return_rate.label(class="form-label") }}
+                                    <div class="input-group">
+                                        {{ form.expected_return_rate(class="form-control") }}
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <small class="text-muted">This is your assumption about annual investment returns. Higher returns mean lower monthly savings needed.</small>
+                                    {% if form.expected_return_rate.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.expected_return_rate.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('portfolio.retirement_plans') }}" class="btn btn-secondary">Back to Plans</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Retirement Planning Guidelines -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Retirement Planning Guidelines</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6>Understanding Expected Returns</h6>
+                        <p class="mb-0">The <strong>expected return rate</strong> is your assumption about how much your investments will grow annually. This affects how much you need to save monthly to reach your retirement goal.</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Target Amount Guidelines</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Conservative:</strong> 25x annual expenses</li>
+                                <li><strong>Moderate:</strong> 20x annual expenses</li>
+                                <li><strong>Aggressive:</strong> 15x annual expenses</li>
+                            </ul>
+                            
+                            <h6>Expected Return Rates (Market Assumptions)</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Conservative Portfolio:</strong> 4-6% (Lower risk, higher savings needed)</li>
+                                <li><strong>Moderate Portfolio:</strong> 6-8% (Balanced risk and savings)</li>
+                                <li><strong>Aggressive Portfolio:</strong> 8-10% (Higher risk, lower savings needed)</li>
+                            </ul>
+                            <small class="text-muted">These are historical averages, not guarantees. Actual returns may differ.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Years to Retirement</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Early Career:</strong> 30-40 years</li>
+                                <li><strong>Mid Career:</strong> 15-25 years</li>
+                                <li><strong>Late Career:</strong> 5-15 years</li>
+                            </ul>
+                            
+                            <h6>Monthly Contribution Tips</h6>
+                            <ul class="list-unstyled">
+                                <li>Start with 10-15% of income</li>
+                                <li>Increase by 1% annually</li>
+                                <li>Maximize employer matches</li>
+                                <li>Consider catch-up contributions</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>How Returns Affect Monthly Savings:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="small"><strong>Example: $1M Target, 30 years</strong></p>
+                                <ul class="small">
+                                    <li><strong>5% Returns:</strong> Save ~$1,200/month</li>
+                                    <li><strong>7% Returns:</strong> Save ~$800/month</li>
+                                    <li><strong>9% Returns:</strong> Save ~$500/month</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="small"><strong>Key Points:</strong></p>
+                                <ul class="small">
+                                    <li>Higher returns = Lower monthly savings needed</li>
+                                    <li>Lower returns = Higher monthly savings needed</li>
+                                    <li>This is due to compound growth over time</li>
+                                    <li>Returns are assumptions, not guarantees</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Calculator -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Target Calculator</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Current Annual Expenses</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="annual-expenses" placeholder="50000">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Risk Tolerance</label>
+                            <select class="form-select" id="risk-multiplier">
+                                <option value="25">Conservative (25x)</option>
+                                <option value="20" selected>Moderate (20x)</option>
+                                <option value="15">Aggressive (15x)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Suggested Target</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" class="form-control" id="suggested-target" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-outline-primary" onclick="calculateTarget()">Calculate Target</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="useTarget()">Use This Target</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function calculateTarget() {
+    const expenses = parseFloat(document.getElementById('annual-expenses').value) || 0;
+    const multiplier = parseFloat(document.getElementById('risk-multiplier').value);
+    const target = expenses * multiplier;
+    document.getElementById('suggested-target').value = target.toLocaleString();
+}
+
+function useTarget() {
+    const target = document.getElementById('suggested-target').value.replace(/,/g, '');
+    if (target) {
+        document.querySelector('input[name="target_amount"]').value = target;
+    }
+}
+
+// Auto-calculate when inputs change
+document.getElementById('annual-expenses').addEventListener('input', calculateTarget);
+document.getElementById('risk-multiplier').addEventListener('change', calculateTarget);
+</script>
+{% endblock %} 
