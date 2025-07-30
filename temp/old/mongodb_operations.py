@@ -1,6 +1,6 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from mongoModels import User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
+from app.mongoModels import User, Budget, Expense, Investment, Goal, UserProfile, Asset, RetirementPlan
 
 class mongoDBClient:
     def __init__(self, uri):

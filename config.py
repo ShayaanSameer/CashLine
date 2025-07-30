@@ -4,11 +4,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///budgeting.db'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    FLASK_ENV = os.environ.get('FLASK_ENV')
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    EXCHANGE_RATE_API_KEY = os.environ.get('EXCHANGE_RATE_API_KEY')
     MONGO_URI = os.environ.get('URI')
+    FINNHUB_API_KEY = os.environ.get('FINNHUB_API_KEY')
 
 class DevelopmentConfig(Config):
     DEBUG = True
