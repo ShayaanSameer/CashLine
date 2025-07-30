@@ -25,7 +25,7 @@ def advice():
         if question:
             try:
                 # Get comprehensive financial context
-                budget_context = summarize_user_financial_context()
+                budget_context = summarize_user_financial_context(current_app.mongo)
                 
                 # Use Gemini API for financial advice
                 url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
@@ -72,6 +72,8 @@ def advice():
                     return render_template('advice.html', advice=advice, question=question)
                 
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 error = f"Error connecting to Gemini API: {e}"
                 return render_template('advice.html', error=error, question=question)
     
@@ -90,7 +92,7 @@ def advice_chat():
     
     try:
         # Get comprehensive financial context
-        budget_context = summarize_user_financial_context()
+        budget_context = summarize_user_financial_context(current_app.mongo)
         
         # Use Gemini API for financial advice
         url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"

@@ -168,17 +168,16 @@
                         <p><strong>Longest Timeline:</strong> {{ longest_timeline.years_to_retirement }} years</p>
                         {% set valid_years = valid_timeline_plans | map(attribute='years_to_retirement') | list %}
                         <p><strong>Average Timeline:</strong> {{ ((valid_years | sum / (valid_years | length)) | round(1)) if valid_years else 0 }} years</p>
+                        {% if shortest_timeline.years_to_retirement < 10 %}
+                            <div class="alert alert-info">
+                                <strong>Short Timeline:</strong> You have a plan with less than 10 years. 
+                                This may require aggressive saving strategies.
+                            </div>
+                        {% endif %}
                     {% else %}
                         <p><strong>Shortest Timeline:</strong> N/A</p>
                         <p><strong>Longest Timeline:</strong> N/A</p>
                         <p><strong>Average Timeline:</strong> 0 years</p>
-                    {% endif %}
-                    
-                    {% if shortest_timeline.years_to_retirement < 10 %}
-                        <div class="alert alert-info">
-                            <strong>Short Timeline:</strong> You have a plan with less than 10 years. 
-                            This may require aggressive saving strategies.
-                        </div>
                     {% endif %}
                 </div>
             </div>

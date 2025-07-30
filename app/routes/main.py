@@ -18,7 +18,7 @@ main_bp = Blueprint("main", __name__)
 @main_bp.route('/onboarding', methods=['GET', 'POST'], endpoint="onboarding")
 @login_required
 def onboarding():
-    GEMINI_API_KEY = current_app.app["GEMINI_API_KEY"]
+    GEMINI_API_KEY = current_app.config["GEMINI_API_KEY"]
     message = None
     error = None
     ai_suggestion = None

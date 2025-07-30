@@ -47,22 +47,22 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('retirement_profile') }}" class="btn w-100" style="background-color: #f8e6b3; border-color: #f0d080; color: #8b6f3d;">
+                            <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn w-100" style="background-color: #f8e6b3; border-color: #f0d080; color: #8b6f3d;">
                                 <i class="material-icons-round">person</i> Update Profile
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('add_retirement_plan') }}" class="btn w-100" style="background-color: #7fb3d3; border-color: #5a9bc4; color: #2d5a2d;">
+                            <a href="{{ url_for('portfolio.add_retirement_plan') }}" class="btn w-100" style="background-color: #7fb3d3; border-color: #5a9bc4; color: #2d5a2d;">
                                 <i class="material-icons-round">add</i> Add Plan
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('asset_allocation') }}" class="btn w-100" style="background-color: #a8d5ba; border-color: #8bc5a3; color: #2d5a2d;">
+                            <a href="{{ url_for('portfolio.asset_allocation') }}" class="btn w-100" style="background-color: #a8d5ba; border-color: #8bc5a3; color: #2d5a2d;">
                                 <i class="material-icons-round">pie_chart</i> Asset Allocation
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('retirement_calculator') }}" class="btn w-100" style="background-color: #d4a5a5; border-color: #c49595; color: #6d4c4c;">
+                            <a href="{{ url_for('portfolio.retirement_calculator') }}" class="btn w-100" style="background-color: #d4a5a5; border-color: #c49595; color: #6d4c4c;">
                                 <i class="material-icons-round">calculate</i> Compare Scenarios
                             </a>
                         </div>
@@ -78,7 +78,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Retirement Profile</h5>
-                    <a href="{{ url_for('retirement_profile') }}" class="btn btn-sm btn-outline-warning">Update</a>
+                    <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-sm btn-outline-warning">Update</a>
                 </div>
                 <div class="card-body">
                     {% if profile %}
@@ -107,7 +107,7 @@
                     {% else %}
                         <div class="text-center py-3">
                             <p class="text-muted">No retirement profile set up</p>
-                            <a href="{{ url_for('retirement_profile') }}" class="btn btn-warning">Set Up Profile</a>
+                            <a href="{{ url_for('portfolio.retirement_profile') }}" class="btn btn-warning">Set Up Profile</a>
                         </div>
                     {% endif %}
                 </div>
@@ -117,7 +117,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Retirement Plans</h5>
-                    <a href="{{ url_for('retirement_plans') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                    <a href="{{ url_for('portfolio.retirement_plans') }}" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     {% if retirement_plans %}
@@ -143,7 +143,7 @@
                     {% else %}
                         <div class="text-center py-3">
                             <p class="text-muted">No retirement plans yet</p>
-                            <a href="{{ url_for('automated_retirement_onboarding') }}" class="btn btn-primary">Create Smart Plan</a>
+                            <a href="{{ url_for('portfolio.automated_retirement_onboarding') }}" class="btn btn-primary">Create Smart Plan</a>
                         </div>
                     {% endif %}
                 </div>
@@ -157,7 +157,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Asset Allocation</h5>
-                    <a href="{{ url_for('asset_allocation') }}" class="btn btn-sm btn-success">Manage</a>
+                    <a href="{{ url_for('portfolio.asset_allocation') }}" class="btn btn-sm btn-success">Manage</a>
                 </div>
                 <div class="card-body">
                     {% if retirement_assets %}
@@ -198,7 +198,7 @@
                         <div class="text-center py-4">
                             <i class="material-icons-round text-muted" style="font-size: 3rem;">pie_chart</i>
                             <p class="text-muted mt-2">No asset allocation set up</p>
-                            <a href="{{ url_for('add_asset') }}" class="btn btn-success">Add Assets</a>
+                            <a href="{{ url_for('portfolio.add_asset') }}" class="btn btn-success">Add Assets</a>
                         </div>
                     {% endif %}
                 </div>
